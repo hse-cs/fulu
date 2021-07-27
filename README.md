@@ -1,1 +1,2 @@
-# Light curve approximator
+# Fulu
+## Light curve approximation

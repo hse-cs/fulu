@@ -7,8 +7,7 @@ import torchbnn as bnn
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 
-
-from lc_approx._base_aug import BaseAugmentation, add_log_lam
+from fulu._base_aug import BaseAugmentation, add_log_lam
 
 
 class BNNRegressor(nn.Module):

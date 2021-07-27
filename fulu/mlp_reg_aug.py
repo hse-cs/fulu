@@ -1,15 +1,14 @@
 import numpy as np
 
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, WhiteKernel, ConstantKernel as C
 
-from lc_approx._base_aug import BaseAugmentation, add_log_lam
+from fulu._base_aug import BaseAugmentation, add_log_lam
 
 
-class GaussianProcessesAugmentation(BaseAugmentation):
+class MLPRegressionAugmentation(BaseAugmentation):
     """
-    Light Curve Augmentation based on Gaussian Processes Regression
+    Light Curve Augmentation based on scikit-learn MLPRegressor
 
     Parameters:
     -----------
@@ -23,13 +22,23 @@ class GaussianProcessesAugmentation(BaseAugmentation):
     def __init__(self, passband2lam):
         super().__init__(passband2lam)
 
-        self.ss = None
+        self.ss_x = None
+        self.ss_y = None
+        self.ss_t = None
         self.reg = None
+    
+    def _preproc_features(self, t, passband, ss_t):
+        passband = np.array(passband)
+        log_lam  = add_log_lam(passband, self.passband2lam)
+        t        = ss_t.transform(np.array(t).reshape((-1, 1)))
+
+        X = np.concatenate((t, log_lam.reshape((-1, 1))), axis=1)
+        return X
 
     def fit(self, t, flux, flux_err, passband):
         """
         Fit an augmentation model.
-
+        
         Parameters:
         -----------
         t : array-like
@@ -41,23 +50,20 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         passband : array-like
             Passband IDs for each observation.
         """
+        
+        self.ss_t = StandardScaler().fit(np.array(t).reshape((-1, 1)))
 
-        t        = np.array(t)
+        X = self._preproc_features(t, passband, self.ss_t)
+        self.ss_x = StandardScaler().fit(X)
+        X_ss = self.ss_x.transform(X)
         flux     = np.array(flux)
-        flux_err = np.array(flux_err)
-        passband = np.array(passband)
-        log_lam  = add_log_lam(passband, self.passband2lam)
+        
+        self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
+        y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
 
-        X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
-
-        self.ss = StandardScaler()
-        X_ss = self.ss.fit_transform(X)
-
-        kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
-        self.reg = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=5,
-                                            optimizer="fmin_l_bfgs_b", random_state=42)
-
-        self.reg.fit(X_ss, flux)
+        self.reg = MLPRegressor(hidden_layer_sizes=(20,10,), solver='lbfgs', activation='tanh',
+                                learning_rate_init=0.001, max_iter=90, batch_size=1)
+        self.reg.fit(X_ss, y_ss.reshape(-1))
         return self
 
     def predict(self, t, passband):
@@ -79,13 +85,10 @@ class GaussianProcessesAugmentation(BaseAugmentation):
             Flux errors of the light curve observations, estimated by the augmentation model.
         """
         
-        t        = np.array(t)
-        passband = np.array(passband)
-        log_lam  = add_log_lam(passband, self.passband2lam)
+        X = self._preproc_features(t, passband, self.ss_t)
+        X_ss = self.ss_x.transform(X)
         
-        X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
-        X_ss = self.ss.transform(X)
-        
-        flux_pred, flux_err_pred = self.reg.predict(X_ss, return_std=True)
-        
-        return flux_pred, flux_err_pred
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
+        flux_err_pred = np.zeros(flux_pred.shape)
+
+        return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred
