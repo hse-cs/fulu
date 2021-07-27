@@ -58,8 +58,9 @@ class GaussianProcessesAugmentation(BaseAugmentation):
                                             optimizer="fmin_l_bfgs_b", random_state=42)
 
         self.reg.fit(X_ss, flux)
+        return self
 
-    def predict(self, t, passband, copy=True):
+    def predict(self, t, passband):
         """
         Apply the augmentation model to the given observation mjds.
         

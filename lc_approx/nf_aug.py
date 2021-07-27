@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
 import torch.nn as nn
@@ -8,59 +7,28 @@ from torch.utils.data import TensorDataset, DataLoader
 from torch.autograd import Variable
 
 
-DEVICE = torch.device('cpu')
-
-
+# TODO: consider to remove
 class InvertibleLayer(nn.Module):
     def __init__(self, var_size):
-        super(InvertibleLayer, self).__init__()
+        super().__init__()
 
         self.var_size = var_size
 
-    def f(self, x, y):
-        '''
-        Implementation of forward pass.
-
-        x: torch.Tensor of shape [batch_size, var_size]
-            Data
-        y: torch.Tensor of shape [batch_size, cond_size]
-            Condition
-
-        Return:
-          torch.Tensor of shape [batch_size, var_size], torch.Tensor of shape [batch_size]
-        '''
-        pass
-
-    def g(self, x, y):
-        '''
-        Implementation of backward (inverse) pass.
-
-        x: torch.Tensor of shape [batch_size, var_size]
-            Data
-        y: torch.Tensor of shape [batch_size, cond_size]
-            Condition
-
-        Return:
-        А  torch.Tensor of shape [batch_size, var_size]
-        '''
-        pass
-    
     
 class NormalizingFlow(nn.Module):
-    
     def __init__(self, layers, prior):
-        super(NormalizingFlow, self).__init__()
+        super().__init__()
 
         self.layers = nn.ModuleList(layers)
         self.prior = prior
 
     def log_prob(self, x, y):
-        '''
+        """
         x: torch.Tensor of shape [batch_size, var_size]
             Data
         y: torch.Tensor of shape [batch_size, cond_size]
             Condition
-        '''
+        """
         log_likelihood = None
 
         for layer in self.layers:
@@ -74,10 +42,10 @@ class NormalizingFlow(nn.Module):
         return log_likelihood.mean()
 
     def sample(self, y):
-        '''
+        """
         y: torch.Tensor of shape [batch_size, cond_size]
             Condition
-        '''
+        """
         
         x = self.prior.sample((len(y), ))
         for layer in self.layers[::-1]:
@@ -89,7 +57,7 @@ class NormalizingFlow(nn.Module):
 class RealNVP(InvertibleLayer):
     
     def __init__(self, var_size, cond_size, mask, hidden=10):
-        super(RealNVP, self).__init__(var_size=var_size)
+        super().__init__(var_size=var_size)
 
         self.mask = mask
 
@@ -105,12 +73,12 @@ class RealNVP(InvertibleLayer):
             )
 
     def f(self, x, y):
-        '''
+        """
         x: torch.Tensor of shape [batch_size, var_size]
             Data
         y: torch.Tensor of shape [batch_size, cond_size]
             Condition
-        '''
+        """
         xy = torch.cat((x * self.mask[None, :], y), dim=1)
         t = self.nn_t(xy)
         s = self.nn_s(xy)
@@ -120,12 +88,12 @@ class RealNVP(InvertibleLayer):
         return new_x, log_det
 
     def g(self, x, y):
-        '''
+        """
         x: torch.Tensor of shape [batch_size, var_size]
             Data
         y: torch.Tensor of shape [batch_size, cond_size]
             Condition
-        '''
+        """
         xy = torch.cat((x * self.mask[None, :], y), dim=1)
         t = self.nn_t(xy)
         s = self.nn_s(xy)
@@ -136,7 +104,8 @@ class RealNVP(InvertibleLayer):
     
 class NFFitter(object):
     
-    def __init__(self, var_size=2, cond_size=2, normalize_y=True, batch_size=32, n_epochs=10, lr=0.0001, randomize_x=True):
+    def __init__(self, var_size=2, cond_size=2, normalize_y=True, batch_size=32, n_epochs=10, lr=0.0001,
+                 randomize_x=True, device='cpu'):
         
         self.normalize_y = normalize_y
         self.randomize_x = randomize_x
@@ -152,16 +121,14 @@ class NFFitter(object):
 
         self.nf = NormalizingFlow(layers=layers, prior=prior)
         self.opt = torch.optim.Adam(self.nf.parameters(), lr=self.lr)
-        
+
+        self.device = torch.device(device)
         
     def reshape(self, y):
-        try:
-            y.shape[1]
-            return y
-        except:
+        if y.ndim < 2:
             return y.reshape(-1, 1)
-    
-    
+        return y
+
     def fit(self, X, y, y_std=None):
         
         # reshape
@@ -183,9 +150,9 @@ class NFFitter(object):
         #y = np.concatenate((y, noise), axis=1)
         
         # numpy to tensor
-        y_real = torch.tensor(y, dtype=torch.float32, device=DEVICE)
-        y_real_std = torch.tensor(y_std, dtype=torch.float32, device=DEVICE)
-        X_cond = torch.tensor(X, dtype=torch.float32, device=DEVICE)
+        y_real = torch.tensor(y, dtype=torch.float32, device=self.device)
+        y_real_std = torch.tensor(y_std, dtype=torch.float32, device=self.device)
+        X_cond = torch.tensor(X, dtype=torch.float32, device=self.device)
         
         # tensor to dataset
         dataset_real = TensorDataset(y_real, y_real_std, X_cond)
@@ -199,14 +166,14 @@ class NFFitter(object):
                 DataLoader(dataset_real, batch_size=self.batch_size, shuffle=True)
             ):   
                 noise = np.random.normal(0, 1, (len(y_batch), 1))
-                noise = torch.tensor(noise, dtype=torch.float32, device=DEVICE)
+                noise = torch.tensor(noise, dtype=torch.float32, device=self.device)
                 
                 y_batch = torch.normal(y_batch, std_batch)
                 y_batch = torch.cat((y_batch, noise), dim=1)
                 
                 if self.randomize_x:
                     noise = np.random.normal(0, 1, (len(x_batch), 1))
-                    noise = torch.tensor(noise, dtype=torch.float32, device=DEVICE)
+                    noise = torch.tensor(noise, dtype=torch.float32, device=self.device)
                     x_batch = torch.cat((x_batch, noise), dim=1)
                 
                 #y_pred = self.nf.sample(x_batch)
@@ -226,10 +193,10 @@ class NFFitter(object):
     def predict(self, X):
         #noise = np.random.normal(0, 1, (X.shape[0], 1))
         #X = np.concatenate((X, noise), axis=1)
-        X = torch.tensor(X, dtype=torch.float32, device=DEVICE)
+        X = torch.tensor(X, dtype=torch.float32, device=self.device)
         if self.randomize_x:
             noise = np.random.normal(0, 1, (len(X), 1))
-            noise = torch.tensor(noise, dtype=torch.float32, device=DEVICE)
+            noise = torch.tensor(noise, dtype=torch.float32, device=self.device)
             X = torch.cat((X, noise), dim=1)
         y_pred = self.nf.sample(X).cpu().detach().numpy()[:, 0]
         # normalize

@@ -8,7 +8,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 
 
-from lc_approx._base_aug import BaseAugmentation, create_aug_data
+from lc_approx._base_aug import BaseAugmentation, add_log_lam
 
 
 class BNNRegressor(nn.Module):
@@ -37,8 +37,7 @@ class FitBNNRegressor:
         self.optimizer = optimizer
         self.debug = debug
         self.device = torch.device(device)
-        
-    
+
     def fit(self, X, y):
         # Estimate model
         self.model = BNNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden)
@@ -74,7 +73,7 @@ class FitBNNRegressor:
         # Disable droout
         self.model.train(False)
         # Convert X and y into torch tensors
-        X_tensor = torch.as_tensor(X, dtype=torch.float32, device=device)
+        X_tensor = torch.as_tensor(X, dtype=torch.float32, device=self.device)
         # Make predictions for X
         y_pred = self.model(X_tensor)
         y_pred = y_pred.cpu().detach().numpy()
@@ -91,28 +90,31 @@ class FitBNNRegressor:
         return mean, std
 
 
-class BayesianNetAugmentation(object):
+class BayesianNetAugmentation(BaseAugmentation):
+    """
+    Light Curve Augmentation based on BNNRegressor with new features
 
-    def __init__(self, passband2lam):
-        """
-        Light Curve Augmentation based on BNNRegressor with new features
-        
-        Parameters:
-        -----------
-        passband2lam : dict
-            A dictionary, where key is a passband ID and value is Log10 of its wave length.
-            Example: 
-                passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23), 
-                                 3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
-        """
-       
-        self.passband2lam = passband2lam
+    Parameters:
+    -----------
+    passband2lam : dict
+        A dictionary, where key is a passband ID and value is Log10 of its wave length.
+        Example:
+            passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23),
+                             3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    device : str or torch device
+        Torch device name, default is 'cpu'
+    """
+
+    def __init__(self, passband2lam, device='cpu'):
+        super().__init__(passband2lam)
+
+        self.device = device
 
         self.ss_x = None
         self.ss_y = None
         self.reg = None
     
-    def get_features(self, t, passband):
+    def _preproc_features(self, t, passband):
         t        = np.array(t).reshape((-1, 1))
         passband = np.array(passband)
         log_lam  = add_log_lam(passband, self.passband2lam).reshape((-1, 1))
@@ -136,18 +138,19 @@ class BayesianNetAugmentation(object):
             Passband IDs for each observation.
         """
 
-        X = self.get_features(t, passband)
+        X = self._preproc_features(t, passband)
         self.ss_x = StandardScaler().fit(X)
         X_ss = self.ss_x.transform(X)
         flux = np.array(flux)
         
         self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
         y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
-        self.reg = FitBNNRegressor(n_hidden=40, n_epochs=400, lr=0.05, kl_weight=0.01, optimizer='Adam')
+        self.reg = FitBNNRegressor(n_hidden=40, n_epochs=400, lr=0.05, kl_weight=0.01, optimizer='Adam',
+                                   device=self.device)
         self.reg.fit(X_ss, y_ss)
-    
-    
-    def predict(self, t, passband, copy=True):
+        return self
+
+    def predict(self, t, passband):
         """
         Apply the augmentation model to the given observation mjds.
         
@@ -166,39 +169,9 @@ class BayesianNetAugmentation(object):
             Flux errors of the light curve observations, estimated by the augmentation model.
         """
 
-        X = self.get_features(t, passband)
+        X = self._preproc_features(t, passband)
         X_ss = self.ss_x.transform(X)
         
         flux_pred, flux_err_pred = self.reg.predict_n_times(X_ss, self.ss_y)
 
         return np.maximum(np.zeros(flux_pred.shape), flux_pred), flux_err_pred
-        
-    
-    def augmentation(self, t_min, t_max, n_obs=100):
-        """
-        The light curve augmentation.
-        
-        Parameters:
-        -----------
-        t_min, t_max : float
-            Min and max timestamps of light curve observations.
-        n_obs : int
-            Number of observations in each passband required.
-            
-        Returns:
-        --------
-        t_aug : array-like
-            Timestamps of light curve observations.
-        flux_aug : array-like
-            Flux of the light curve observations, approximated by the augmentation model.
-        flux_err_aug : array-like
-            Flux errors of the light curve observations, estimated by the augmentation model.
-        passband_aug : array-like
-            Passband IDs for each observation.
-        """
-        
-        t_aug, passband_aug = create_aug_data(t_min, t_max, len(self.passband2lam), n_obs)
-        X_aug = self.ss_x.transform(self.get_features(t_aug, passband_aug))
-        flux_aug, flux_err_aug = self.reg.predict_n_times(X_aug, self.ss_y)
-        
-        return t_aug, np.maximum(np.zeros(flux_aug.shape), flux_aug), flux_err_aug, passband_aug

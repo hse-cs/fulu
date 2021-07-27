@@ -52,7 +52,7 @@ class BaseAugmentation(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def predict(self, t, passband, copy=True):
+    def predict(self, t, passband):
         """
         Apply the augmentation model to the given observation mjds.
 
@@ -96,6 +96,6 @@ class BaseAugmentation(ABC):
         """
 
         t_aug, passband_aug = create_aug_data(t_min, t_max, tuple(self.passband2lam), n_obs)
-        flux_aug, flux_err_aug = self.predict(t_aug, passband_aug, copy=True)
+        flux_aug, flux_err_aug = self.predict(t_aug, passband_aug)
 
         return t_aug, flux_aug, flux_err_aug, passband_aug
