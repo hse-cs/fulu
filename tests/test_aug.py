@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from fulu._base_aug import BaseAugmentation
 
@@ -22,8 +23,17 @@ def sample_data():
 
 @pytest.mark.parametrize("cls", subclasses(BaseAugmentation))
 def test_aug_with_sample_data(cls):
+    n_aug = 100
     passband2lam, *lc = sample_data()
+    n_band = len(passband2lam)
     t, *_ = lc
     aug = cls(passband2lam)
     aug.fit(*lc)
-    aug.augmentation(t[0], t[-1], 100)
+    t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), n_aug)
+    assert_allclose(t_aug, np.tile(np.linspace(t.min(), t.max(), n_aug), n_band))
+    assert flux_aug.size == n_aug * n_band
+    assert np.all(flux_aug >= 0.0)
+    assert flux_err_aug.size == n_aug * n_band
+    assert np.all(flux_err_aug >= 0.0)
+    assert passband_aug.size == n_aug * n_band
+    assert set(passband_aug) == set(passband2lam)
