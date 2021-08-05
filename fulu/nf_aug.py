@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from torch.autograd import Variable
 
+from fulu._base_aug import BaseAugmentation, add_log_lam
+
 
 # TODO: consider to remove
 class InvertibleLayer(nn.Module):
@@ -207,9 +209,99 @@ class NFFitter(object):
     def predict_n_times(self, X, n_times=100):
         predictions = []
         for i in range(n_times):
-            y_pred = self.predict(X)
+            y_pred = self.predict(X).reshape(-1, )
             predictions.append(y_pred)
         predictions = np.array(predictions)
         mean = predictions.mean(axis=0)
         std = predictions.std(axis=0)
         return mean, std
+
+    
+    
+    
+
+class NormalizingFlowAugmentation(BaseAugmentation):
+    """
+    Light Curve Augmentation based on Normalizing Flows Regression
+
+    Parameters:
+    -----------
+    passband2lam : dict
+        A dictionary, where key is a passband ID and value is Log10 of its wave length.
+        Example: 
+            passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23), 
+                             3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    """
+    
+    def __init__(self, passband2lam, device='cpu'):
+        super().__init__(passband2lam)
+
+        self.device = device
+        
+        self.passband2lam = passband2lam
+        
+        self.ss = None
+        self.reg = None
+    
+    
+    def fit(self, t, flux, flux_err, passband):
+        """
+        Fit an augmentation model.
+        
+        Parameters:
+        -----------
+        t : array-like
+            Timestamps of light curve observations.
+        flux : array-like
+            Flux of the light curve observations.
+        flux_err : array-like
+            Flux errors of the light curve observations.
+        passband : array-like
+            Passband IDs for each observation.
+        """
+        
+        t        = np.array(t)
+        flux     = np.array(flux)
+        flux_err = np.array(flux_err)
+        passband = np.array(passband)
+        log_lam  = add_log_lam(passband, self.passband2lam)
+        
+        X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
+        
+        self.ss = StandardScaler()
+        X_ss = self.ss.fit_transform(X)
+        
+        self.reg = NFFitter(var_size=2, cond_size=2, normalize_y=True, batch_size=500,
+                            n_epochs=3000, lr=0.005, randomize_x=True, device=self.device)
+        self.reg.fit(X_ss, flux, flux_err)
+    
+    
+    def predict(self, t, passband):
+        """
+        Apply the augmentation model to the given observation mjds.
+        
+        Parameters:
+        -----------
+        t : array-like
+            Timestamps of light curve observations.
+        passband : array-like
+            Passband IDs for each observation.
+            
+        Returns:
+        --------
+        flux_pred : array-like
+            Flux of the light curve observations, approximated by the augmentation model.
+        flux_err_pred : array-like
+            Flux errors of the light curve observations, estimated by the augmentation model.
+        """
+        
+        t        = np.array(t)
+        passband = np.array(passband)
+        log_lam  = add_log_lam(passband, self.passband2lam)
+        
+        X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
+        X_ss = self.ss.transform(X)
+        
+        flux_pred, flux_err_pred = self.reg.predict_n_times(X_ss, n_times=100)
+        
+        return flux_pred, flux_err_pred
