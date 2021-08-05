@@ -181,7 +181,7 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         X = self._preproc_features(t, passband, self.ss_t)
         X_ss = self.ss_x.transform(X)
         
-        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss)).reshape(-1, )
         flux_err_pred = np.zeros(flux_pred.shape)
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred

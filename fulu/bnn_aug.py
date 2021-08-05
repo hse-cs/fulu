@@ -81,7 +81,7 @@ class FitBNNRegressor:
     def predict_n_times(self, X, ss, n_times=100):
         predictions = []
         for i in range(n_times):
-            y_pred = self.predict(X)
+            y_pred = self.predict(X).reshape(-1, )
             predictions.append(y_pred)
         predictions = ss.inverse_transform(np.array(predictions))
         mean = predictions.mean(axis=0)
