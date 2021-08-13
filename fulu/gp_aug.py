@@ -18,15 +18,20 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         Example:
             passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23),
                              3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    kernel : kernel object from sklearn
+        Kernel for GaussianProcessRegressor. Can be combine from different kernels.
+        Example:
+            kernel = C(1.0)*RBF([1, 1]) + Matern() + WhiteKernel()
     """
 
     def __init__(self, passband2lam):
-        super().__init__(passband2lam)
+        super().__init__(passband2lam, kernel)
 
         self.ss = None
         self.reg = None
+        self.kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
 
-    def fit(self, t, flux, flux_err, passband):
+    def fit(self, t, flux, flux_err, passband, flag_err = False):
         """
         Fit an augmentation model.
 
@@ -40,6 +45,8 @@ class GaussianProcessesAugmentation(BaseAugmentation):
             Flux errors of the light curve observations.
         passband : array-like
             Passband IDs for each observation.
+        flag_err : bool
+            Flag responsible for using flux error by GP Regressor.
         """
 
         t        = np.array(t)
@@ -49,14 +56,19 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         log_lam  = add_log_lam(passband, self.passband2lam)
 
         X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
-
+        
+        X_error = (flux_err / np.std(flux)).reshape(-1)
         self.ss = StandardScaler()
         X_ss = self.ss.fit_transform(X)
 
-        kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
-        self.reg = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=5,
-                                            optimizer="fmin_l_bfgs_b", random_state=42)
+        self.kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
 
+        if flag_err:
+            self.reg = GaussianProcessRegressor(kernel=kernel, alpha=X_error, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
+
+        else:
+            self.reg = GaussianProcessRegressor(kernel=kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
+            
         self.reg.fit(X_ss, flux)
         return self
 
