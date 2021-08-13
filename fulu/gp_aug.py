@@ -24,14 +24,16 @@ class GaussianProcessesAugmentation(BaseAugmentation):
             kernel = C(1.0)*RBF([1, 1]) + Matern() + WhiteKernel()
     """
 
-    def __init__(self, passband2lam):
-        super().__init__(passband2lam, kernel)
+    def __init__(self, passband2lam, kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), flag_err = False):
+
+        super().__init__(passband2lam, kernel, flag_err)
 
         self.ss = None
         self.reg = None
-        self.kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
+        self.kernel = kernel
+        self.flag_err = flag_err
 
-    def fit(self, t, flux, flux_err, passband, flag_err = False):
+    def fit(self, t, flux, flux_err, passband):
         """
         Fit an augmentation model.
 
@@ -61,13 +63,12 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         self.ss = StandardScaler()
         X_ss = self.ss.fit_transform(X)
 
-        self.kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel()
+        reg_kwargs = dict(kernel=self.kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
 
-        if flag_err:
-            self.reg = GaussianProcessRegressor(kernel=kernel, alpha=X_error, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
+        if self.flag_err:
+            reg_kwargs[alpha] = X_error
 
-        else:
-            self.reg = GaussianProcessRegressor(kernel=kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
+        self.reg = GaussianProcessRegressor(**reg_kwargs)
             
         self.reg.fit(X_ss, flux)
         return self
