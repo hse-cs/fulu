@@ -26,7 +26,7 @@ class GaussianProcessesAugmentation(BaseAugmentation):
 
     def __init__(self, passband2lam, kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), flag_err = False):
 
-        super().__init__(passband2lam, kernel, flag_err)
+        super().__init__(passband2lam)
 
         self.ss = None
         self.reg = None
