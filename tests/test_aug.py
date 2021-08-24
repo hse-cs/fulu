@@ -28,7 +28,8 @@ def test_aug_with_sample_data(cls):
     n_band = len(passband2lam)
     t, *_ = lc
     aug = cls(passband2lam)
-    aug.fit(*lc)
+    aug_fit = aug.fit(*lc)
+    assert aug_fit is aug, '.fit() must return self'
     t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), n_aug)
     assert_allclose(t_aug, np.tile(np.linspace(t.min(), t.max(), n_aug), n_band))
     assert flux_aug.size == n_aug * n_band
