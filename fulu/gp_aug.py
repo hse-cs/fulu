@@ -66,7 +66,7 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         reg_kwargs = dict(kernel=self.kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
 
         if self.flag_err:
-            reg_kwargs[alpha] = X_error
+            reg_kwargs['alpha'] = X_error ** 2
 
         self.reg = GaussianProcessRegressor(**reg_kwargs)
             
