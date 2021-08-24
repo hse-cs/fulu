@@ -274,7 +274,8 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         self.reg = NFFitter(var_size=2, cond_size=2, normalize_y=True, batch_size=500,
                             n_epochs=3000, lr=0.005, randomize_x=True, device=self.device)
         self.reg.fit(X_ss, flux, flux_err)
-    
+
+        return self
     
     def predict(self, t, passband):
         """
