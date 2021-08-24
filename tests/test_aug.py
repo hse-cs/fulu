@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF, Matern, WhiteKernel
 
+from fulu import GaussianProcessesAugmentation
 from fulu._base_aug import BaseAugmentation
 
 
@@ -21,13 +23,20 @@ def sample_data():
     return passband2lam, t, flux, flux_err, passbands
 
 
-@pytest.mark.parametrize("cls", subclasses(BaseAugmentation))
-def test_aug_with_sample_data(cls):
+@pytest.mark.parametrize(
+    ("cls", "init_kwargs"),
+    [(cls, {}) for cls in subclasses(BaseAugmentation)]
+    + [
+        (GaussianProcessesAugmentation, dict(use_err=True)),
+        (GaussianProcessesAugmentation, dict(kernel=ConstantKernel(1.0)*RBF([1, 1]) + Matern() + WhiteKernel())),
+    ],
+)
+def test_aug_with_sample_data(cls, init_kwargs):
     n_aug = 100
     passband2lam, *lc = sample_data()
     n_band = len(passband2lam)
     t, *_ = lc
-    aug = cls(passband2lam)
+    aug = cls(passband2lam, **init_kwargs)
     aug.fit(*lc)
     t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), n_aug)
     assert_allclose(t_aug, np.tile(np.linspace(t.min(), t.max(), n_aug), n_band))
