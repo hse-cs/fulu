@@ -22,16 +22,18 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         Kernel for GaussianProcessRegressor. Can be combine from different kernels.
         Example:
             kernel = C(1.0)*RBF([1, 1]) + Matern() + WhiteKernel()
+    use_err : bool
+        Flag responsible for using flux error by GP Regressor.
     """
 
-    def __init__(self, passband2lam, kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), flag_err = False):
+    def __init__(self, passband2lam, kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), use_err = False):
 
         super().__init__(passband2lam)
 
         self.ss = None
         self.reg = None
         self.kernel = kernel
-        self.flag_err = flag_err
+        self.use_err = use_err
 
     def fit(self, t, flux, flux_err, passband):
         """
@@ -47,8 +49,6 @@ class GaussianProcessesAugmentation(BaseAugmentation):
             Flux errors of the light curve observations.
         passband : array-like
             Passband IDs for each observation.
-        flag_err : bool
-            Flag responsible for using flux error by GP Regressor.
         """
 
         t        = np.array(t)
@@ -65,7 +65,7 @@ class GaussianProcessesAugmentation(BaseAugmentation):
 
         reg_kwargs = dict(kernel=self.kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
 
-        if self.flag_err:
+        if self.use_err:
             reg_kwargs['alpha'] = X_error ** 2
 
         self.reg = GaussianProcessRegressor(**reg_kwargs)
