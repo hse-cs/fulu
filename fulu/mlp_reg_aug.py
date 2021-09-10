@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
 
 from fulu._base_aug import BaseAugmentation, add_log_lam
 
@@ -17,15 +18,40 @@ class MLPRegressionAugmentation(BaseAugmentation):
         Example:
             passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23),
                              3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    hidden_layer_sizes : tuple
+        The ith element represents the number of neurons in the ith hidden layer, length = n_layers - 2.
+    solver : string
+        The solver for weight optimization.
+    activation : string
+        Activation function for the hidden layer. Possible values: {‘identity’, ‘logistic’, ‘tanh’, ‘relu’}.
+    learning_rate_init : float
+        The initial learning rate used. It controls the step-size in updating the weights. Only used when solver=’sgd’
+        or ‘adam’.
+    max_iter : int
+        Maximum number of iterations. The solver iterates until convergence or this number of iterations. 
+        For stochastic solvers (‘sgd’, ‘adam’), note that this determines the number of epochs 
+        (how many times each data point will be used), not the number of gradient steps.
+    batch_size : int
+        Size of minibatches for stochastic optimizers. If the solver is ‘lbfgs’, 
+        the classifier will not use minibatch. When set to “auto”, batch_size=min(200, n_samples)
     """
 
-    def __init__(self, passband2lam):
+    def __init__(self, passband2lam, hidden_layer_sizes=(20,10,), solver='lbfgs', activation='tanh',
+                learning_rate_init=0.001, max_iter=90, batch_size=1):
         super().__init__(passband2lam)
 
         self.ss_x = None
         self.ss_y = None
         self.ss_t = None
         self.reg = None
+        self.flux_err = 0
+        
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.solver = solver
+        self.activation = activation
+        self.learning_rate_init = learning_rate_init
+        self.max_iter = max_iter
+        self.batch_size = batch_size
     
     def _preproc_features(self, t, passband, ss_t):
         passband = np.array(passband)
@@ -61,9 +87,16 @@ class MLPRegressionAugmentation(BaseAugmentation):
         self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
         y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
 
-        self.reg = MLPRegressor(hidden_layer_sizes=(20,10,), solver='lbfgs', activation='tanh',
-                                learning_rate_init=0.001, max_iter=90, batch_size=1)
+        self.reg = MLPRegressor(hidden_layer_sizes=self.hidden_layer_sizes, 
+                                solver=self.solver, 
+                                activation=self.activation,
+                                learning_rate_init=self.learning_rate_init, 
+                                max_iter=self.max_iter, 
+                                batch_size=self.batch_size)
         self.reg.fit(X_ss, y_ss.reshape(-1))
+        
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
+        self.flux_err = np.sqrt(mean_squared_error(flux, flux_pred))
         return self
 
     def predict(self, t, passband):
@@ -89,6 +122,6 @@ class MLPRegressionAugmentation(BaseAugmentation):
         X_ss = self.ss_x.transform(X)
         
         flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
-        flux_err_pred = np.zeros(flux_pred.shape)
+        flux_err_pred = np.ones(flux_pred.shape) * self.flux_err
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred
