@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF, Matern, WhiteKernel
 
-from fulu import GaussianProcessesAugmentation, NormalizingFlowAugmentation
+from fulu import GaussianProcessesAugmentation, NormalizingFlowAugmentation, MLPRegressionAugmentation
 from fulu._base_aug import BaseAugmentation
 
 
