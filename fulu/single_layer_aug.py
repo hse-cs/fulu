@@ -225,6 +225,6 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         X_ss = self.ss_x.transform(X)
         
         flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss)).reshape(-1, )
-        flux_err_pred = np.full_like(np.ones(flux_pred.shape), self.flux_err)
+        flux_err_pred = np.full_like(flux_pred, self.flux_err)
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred
