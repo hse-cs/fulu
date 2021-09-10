@@ -20,6 +20,8 @@ class NNRegressor(nn.Module):
             act = nn.ReLU()
         elif activation == 'sigmoid':
             act = nn.Sigmoid()
+        else:
+            raise ValueError('activation function {} is not supported'.format(activation))
             
         self.seq = nn.Sequential(
                     nn.Linear(n_inputs, n_hidden),
@@ -223,6 +225,6 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         X_ss = self.ss_x.transform(X)
         
         flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss)).reshape(-1, )
-        flux_err_pred = np.ones(flux_pred.shape) * self.flux_err
+        flux_err_pred = np.full_like(np.ones(flux_pred.shape), self.flux_err)
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred
