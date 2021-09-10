@@ -37,7 +37,7 @@ def test_aug_with_sample_data(cls, init_kwargs):
     passband2lam, *lc = sample_data()
     n_band = len(passband2lam)
     t, *_ = lc
-    aug = cls(passband2lam)
+    aug = cls(passband2lam, **init_kwargs)
     aug_fit = aug.fit(*lc)
     assert aug_fit is aug, '.fit() must return self'
     t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), n_aug)
