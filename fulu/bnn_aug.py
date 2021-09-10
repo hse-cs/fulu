@@ -21,6 +21,18 @@ class BNNRegressor(nn.Module):
                         nn.LeakyReLU(),
                         bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden // 2, out_features=1))
         
+        self.model = nn.Sequential(
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_inputs, out_features=n_hidden),
+                        nn.Tanh(),
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden, out_features=n_hidden),
+                        nn.Tanh(),
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden, out_features=1))
+        
+        self.model = nn.Sequential(
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_inputs, out_features=n_hidden),
+                        nn.Tanh(),
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden, out_features=1))
+        
     def forward(self, x):
         return self.model(x)
     
@@ -104,9 +116,14 @@ class BayesianNetAugmentation(BaseAugmentation):
         Torch device name, default is 'cpu'
     """
 
-    def __init__(self, passband2lam, device='cpu'):
+    def __init__(self, passband2lam, n_hidden=40, n_epochs=400, lr=0.05, kl_weight=0.01, optimizer='Adam', device='cpu'):
         super().__init__(passband2lam)
 
+        self.n_hidden = n_hidden
+        self.n_epochs = n_epochs
+        self.lr = lr
+        self.kl_weight = kl_weight
+        self.optimizer = optimizer
         self.device = device
 
         self.ss_x = None
@@ -144,7 +161,11 @@ class BayesianNetAugmentation(BaseAugmentation):
         
         self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
         y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
-        self.reg = FitBNNRegressor(n_hidden=40, n_epochs=400, lr=0.05, kl_weight=0.01, optimizer='Adam',
+        self.reg = FitBNNRegressor(n_hidden=self.n_hidden, 
+                                   n_epochs=self.n_epochs, 
+                                   lr=self.lr, 
+                                   kl_weight=self.kl_weight, 
+                                   optimizer=self.optimizer,
                                    device=self.device)
         self.reg.fit(X_ss, y_ss)
         return self
