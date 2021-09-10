@@ -30,6 +30,8 @@ def sample_data():
         (GaussianProcessesAugmentation, dict(use_err=True)),
         (GaussianProcessesAugmentation, dict(kernel=ConstantKernel(1.0)*RBF([1, 1]) + Matern() + WhiteKernel())),
         (NormalizingFlowAugmentation, dict(batch_size=100, n_epochs=1000, lr=0.01)),
+        (MLPRegressionAugmentation, dict(hidden_layer_sizes=(20,10), solver='lbfgs', activation='tanh',
+                                         learning_rate_init=0.001, max_iter=90, batch_size=1)),
     ],
 )
 def test_aug_with_sample_data(cls, init_kwargs):
