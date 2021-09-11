@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF, Matern, WhiteKernel
 
-from fulu import GaussianProcessesAugmentation, NormalizingFlowAugmentation
+from fulu import GaussianProcessesAugmentation, NormalizingFlowAugmentation, MLPRegressionAugmentation
 from fulu._base_aug import BaseAugmentation
 
 
@@ -30,6 +30,8 @@ def sample_data():
         (GaussianProcessesAugmentation, dict(use_err=True)),
         (GaussianProcessesAugmentation, dict(kernel=ConstantKernel(1.0)*RBF([1, 1]) + Matern() + WhiteKernel())),
         (NormalizingFlowAugmentation, dict(batch_size=100, n_epochs=1000, lr=0.01)),
+        (MLPRegressionAugmentation, dict(hidden_layer_sizes=(20), solver='lbfgs', activation='relu',
+                                         learning_rate_init=0.005, max_iter=50, batch_size=2)),
     ],
 )
 def test_aug_with_sample_data(cls, init_kwargs):
