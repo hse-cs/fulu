@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import matplotlib
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import pandas as pd
