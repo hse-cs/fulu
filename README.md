@@ -23,5 +23,6 @@ flux_err = np.ones_like(flux)
 passbands = np.tile(list(passband2lam), n_per_band)
 
 aug = MLPRegressionAugmentation(passband2lam)
+aug.fit(t, flux, flux_err, passbands)
 t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), 100)
 ```
