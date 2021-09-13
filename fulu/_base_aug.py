@@ -24,40 +24,6 @@ def create_aug_data(t_min, t_max, passband_ids, n_obs=1000):
         passband += [band] * n_obs
     return np.array(t), np.array(passband)
 
-def create_colors_dict(passband2lam):
-    """
-    """
-    
-    colors = {}
-    tableau_colors = mcolors.TABLEAU_COLORS.keys()
-    for key, tone in zip(passband2lam.keys(), tableau_colors):
-        colors.update([[key, tone]])
-    return colors
-
-def compile_obj(t, flux, flux_err, passband):
-    """
-    """
-    
-    obj = pd.DataFrame()
-    obj['mjd']      = t
-    obj['flux']     = flux
-    obj['flux_err'] = flux_err
-    obj['passband'] = passband
-    return obj
-
-def get_passband(anobject, passband):
-    """
-    """
-    
-    light_curve = anobject[anobject.passband == passband]
-    return light_curve
-
-def get_group_by_mjd(anobject_approx):
-    """
-    """
-
-    curve = anobject_approx[['mjd', 'flux']].groupby('mjd', as_index=False).sum()
-    return curve
 
 class BaseAugmentation(ABC):
     """
@@ -74,7 +40,7 @@ class BaseAugmentation(ABC):
 
     def __init__(self, passband2lam):
         self.passband2lam = passband2lam
-        self.colors = create_colors_dict(passband2lam)
+        self.colors = {key: tone for key, tone in zip(passband2lam.keys(), mcolors.TABLEAU_COLORS.keys())}
 
     @abstractmethod
     def fit(self, t, flux, flux_err, passband):
@@ -143,7 +109,18 @@ class BaseAugmentation(ABC):
 
         return t_aug, flux_aug, flux_err_aug, passband_aug
     
-    def ax_adjust():
+    def compile_obj(self, t, flux, flux_err, passband):
+        """
+        """
+
+        obj = pd.DataFrame()
+        obj['time']      = t
+        obj['flux']     = flux
+        obj['flux_err'] = flux_err
+        obj['passband'] = passband
+        return obj
+    
+    def ax_adjust(self):
         """
         """
 
@@ -161,78 +138,95 @@ class BaseAugmentation(ABC):
 
         return ax
 
-    def errorbar_passband(anobject_train, passband, ax, anobject_test=None):
+    def errorbar_passband(self, anobject_train, passband, ax, anobject_test=None):
         """
         """
 
         anobject_train = compile_obj(*anobject_train)
-        anobject_train = anobject_train.sort_values('mjd')
-        light_curve_train = get_passband(anobject_train, passband)
+        anobject_train = anobject_train.sort_values('time')
+        light_curve_train = anobject_train[anobject_train.passband == passband]
 
-        ax.errorbar(light_curve_train['mjd'].values, light_curve_train['flux'].values, \
-                         yerr=light_curve_train['flux_err'].values, linewidth=3.5, \
-                         marker='^', elinewidth=1.7 ,markersize=14.50, \
-               markeredgecolor='black', markeredgewidth=1.50, \
+        ax.errorbar(light_curve_train['time'].values, light_curve_train['flux'].values,
+                         yerr=light_curve_train['flux_err'].values, linewidth=3.5,
+                         marker='^', elinewidth=1.7 ,markersize=14.50,
+               markeredgecolor='black', markeredgewidth=1.50,
                          fmt='.', color=colors[passband], label=str(passband)+' train')
         if anobject_test is not None:
             anobject_test = compile_obj(*anobject_test)
-            anobject_test = anobject_test.sort_values('mjd')
-            light_curve_test = get_passband(anobject_test, passband)
-            ax.errorbar(light_curve_test['mjd'].values, light_curve_test['flux'].values, \
-                         yerr=light_curve_test['flux_err'].values, linewidth=3.5, \
-                         marker='o', elinewidth=1.7 ,markersize=14.50, \
-               markeredgecolor='black', markeredgewidth=1.50, \
+            anobject_test = anobject_test.sort_values('time')
+            light_curve_test = anobject_test[anobject_test.passband == passband]
+            ax.errorbar(light_curve_test['time'].values, light_curve_test['flux'].values,
+                         yerr=light_curve_test['flux_err'].values, linewidth=3.5,
+                         marker='o', elinewidth=1.7 ,markersize=14.50,
+               markeredgecolor='black', markeredgewidth=1.50,
                          fmt='.', color=colors[passband], label=str(passband)+' test')
 
-    def plot_approx(anobject_approx, passband, ax):
+    def plot_approx(self, anobject_approx, passband, ax):
         """
         """
         
         anobject_approx = compile_obj(*anobject_approx)
-        anobject_approx = anobject_approx.sort_values('mjd')
-        light_curve_approx = get_passband(anobject_approx, passband)
-        ax.plot(light_curve_approx['mjd'].values, light_curve_approx['flux'].values, \
+        anobject_approx = anobject_approx.sort_values('time')
+        light_curve_approx = anobject_approx[anobject_approx.passband == passband]
+        ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
                         linewidth=3.5, color=colors[passband], label=str(passband) + ' approx flux', zorder=10)
-        ax.fill_between(light_curve_approx['mjd'].values,\
-                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values, \
+        ax.fill_between(light_curve_approx['time'].values,
+                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
                          color=colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
 
-    def plot_sum_passbands(anobject_approx, ax):
+    def plot_sum_passbands(self, anobject_approx, ax):
         """
         """
 
         anobject_approx = compile_obj(*anobject_approx)
-        curve = get_group_by_mjd(anobject_approx)
-        ax.plot(curve['mjd'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
+        anobject_approx = anobject_train.sort_values('time')
+        curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
+        ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
 
-    def plot_peak(anobject_approx, ax):
+    def plot_peak(self, anobject_approx, ax):
         """
         """
 
         anobject_approx = compile_obj(*anobject_approx)
-        curve = get_group_by_mjd(anobject_approx)
-        pred_peak_mjd = curve['mjd'][curve['flux'].argmax()]
+        curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
+        pred_peak_mjd = curve['time'][curve['flux'].argmax()]
         ax.axvline(pred_peak_mjd, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
-
-    def plot_one_graph_passband(anobject_train, passband, ax, anobject_test=None, anobject_approx=None, plot_peak=None):
+    
+    def plot_approx(self, t_min, t_max, passband, ax):
+        """
+        """
+        
+        anobject_approx = self.augmentation(t_min, t_max)
+        plot_approx(anobject_approx, passband, ax)
+        if plot_peak is not None:
+            plot_sum_passbands(anobject_approx, ax)
+            plot_peak(anobject_approx, ax)
+                    
+    def plot_one_graph_passband(self, anobject_train, passband, ax, anobject_test=None, anobject_approx=None, plot_peak=None):
         """
         """
 
         errorbar_passband(anobject_train, passband, ax, anobject_test)
         if anobject_approx is not None:
-            plot_approx(anobject_approx, passband, ax)
-            if plot_peak is not None:
-                plot_sum_passbands(anobject_approx, ax)
-                plot_peak(anobject_approx, ax)
+            t_train, _, __, ___ = anobject_train
+            if anobject_test is not None:
+                t_test, _, __, ___ = anobject_test
+                t_min = min(t_train.min(), t_test.min())
+                t_max = max(t_train.max(), t_test.max())
+                plot_approx(t_min, t_max, passband, ax)
+            else:
+                t_min = t_train.min()
+                t_max = t_train.max()
+                plot_approx(t_min, t_max, passband, ax)
 
-    def plot_true_peak(true_peak_mjd, ax):
+    def plot_true_peak(self, true_peak_mjd, ax):
         """
         """
 
         ax.axvline(true_peak_mjd, label='true peak', color='black', linewidth=5.5)
 
-    def plot_one_graph(anobject_train, anobject_test=None, passband=None, anobject_approx=None, ax=None, true_peak_mjd=None, plot_peak=None, title="", save=None):
+    def plot_one_graph(self, anobject_train, anobject_test=None, passband=None, anobject_approx=None, ax=None, true_peak_mjd=None, plot_peak=None, title="", save=None):
         """
         Plotting test and train points of light curve with errors for all passbands on one graph by default.
 
@@ -241,11 +235,11 @@ class BaseAugmentation(ABC):
         If you submit augmented data, a black solid curve is plotted at the predicted points.
         The predicted flux errors are also plotted using a gray bar.
 
-        It is assumed that your light curve is a table containing:
-        observation time in MJD with the name of the corresponding column "mjd";
-        flux in the column called "flux";
-        flux errors in the column called "flux_err";
-        passbands in the column called "passband".
+        It is assumed that your light curve is containing:
+        observation time;
+        flux;
+        flux errors;
+        passbands.
 
         Parameters:
         -----------
