@@ -294,7 +294,7 @@ class NormalizingFlowAugmentation(BaseAugmentation):
     
     def predict(self, t, passband):
         """
-        Apply the augmentation model to the given observation mjds.
+        Apply the augmentation model to the given observation time moments.
         
         Parameters:
         -----------
