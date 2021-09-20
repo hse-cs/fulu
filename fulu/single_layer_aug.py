@@ -4,16 +4,28 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
 
 from fulu._base_aug import BaseAugmentation, add_log_lam
 
 
 class NNRegressor(nn.Module):
-    def __init__(self, n_inputs=1, n_hidden=10):
+    def __init__(self, n_inputs=1, n_hidden=10, activation='tanh'):
         super(NNRegressor, self).__init__()
+        
+        act = nn.Tanh()
+        if activation == 'tanh':
+            act = nn.Tanh()
+        elif activation == 'relu':
+            act = nn.ReLU()
+        elif activation == 'sigmoid':
+            act = nn.Sigmoid()
+        else:
+            raise ValueError('activation function {} is not supported'.format(activation))
+            
         self.seq = nn.Sequential(
                     nn.Linear(n_inputs, n_hidden),
-                    nn.ReLU(),
+                    act,
                     nn.Linear(n_hidden, 1))
 
     def forward(self, x):
@@ -21,10 +33,11 @@ class NNRegressor(nn.Module):
     
     
 class FitNNRegressor:
-    def __init__(self, n_hidden=10, n_epochs=10, batch_size=64, lr=0.01, lam=0., optimizer='Adam', debug=0,
+    def __init__(self, n_hidden=10, activation='tanh', n_epochs=10, batch_size=64, lr=0.01, lam=0., optimizer='Adam', debug=0,
                  device='auto'):
         self.model = None
         self.n_hidden = n_hidden
+        self.activation = activation
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.lr = lr
@@ -38,7 +51,9 @@ class FitNNRegressor:
     
     def fit(self, X, y):
         # Estimate model
-        self.model = NNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden).to(self.device)
+        self.model = NNRegressor(n_inputs=X.shape[1], 
+                                 n_hidden=self.n_hidden, 
+                                 activation=self.activation).to(self.device)
         # Convert X and y into torch tensors
         X_tensor = torch.as_tensor(X, dtype=torch.float32, device=self.device)
         y_tensor = torch.as_tensor(y, dtype=torch.float32, device=self.device)
@@ -59,7 +74,7 @@ class FitNNRegressor:
         self.model.train(True)
         
         best_loss = float('inf')
-        best_state = None
+        best_state = self.model.state_dict()
         
         # Start the model fit
         for epoch_i in range(self.n_epochs):
@@ -107,19 +122,39 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         Example:
             passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23),
                              3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    n_hidden : int
+        Number of neurons in a layer.
+    activation : string
+        Neuron's activation function. Possible values: {'tanh', 'relu', 'sigmoid'}.
+    n_epochs : int
+        Number of epochs of model weights optimization.
+    batch_size : int
+        Number of samples for one iteration of model weights optimization.
+    lr : float
+        Learning rate value for model weights optimization.
+    optimizer : string
+        Optimization algorithm. Possible values: {'SGD', 'Adam', 'RMSprop'}.
     device : str or torch device, optional
         Torch device name, default is 'auto' which uses CUDA if available and CPU if not
     """
     
-    def __init__(self, passband2lam, device='auto'):
+    def __init__(self, passband2lam, n_hidden=20, activation='tanh', n_epochs=1000, batch_size=500, 
+                 lr=0.01, optimizer='Adam', device='auto'):
         super().__init__(passband2lam)
 
+        self.n_hidden = n_hidden
+        self.activation = activation
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
+        self.lr = lr
+        self.optimizer = optimizer
         self.device = device
 
         self.ss_x = None
         self.ss_y = None
         self.ss_t = None
         self.reg = None
+        self.flux_err = 0
 
     def _preproc_features(self, t, passband, ss_t):
         passband = np.array(passband)
@@ -154,14 +189,22 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         
         self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
         y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
-        self.reg = FitNNRegressor(n_hidden=80, n_epochs=100, batch_size=2, optimizer='SGD', device=self.device)
+        self.reg = FitNNRegressor(n_hidden=self.n_hidden, 
+                                  activation=self.activation,
+                                  n_epochs=self.n_epochs, 
+                                  batch_size=self.batch_size, 
+                                  lr=self.lr,
+                                  optimizer=self.optimizer, 
+                                  device=self.device)
         self.reg.fit(X_ss, y_ss)
-
+        
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss)).reshape(-1, )
+        self.flux_err = np.sqrt(mean_squared_error(flux, flux_pred))
         return self
 
     def predict(self, t, passband):
         """
-        Apply the augmentation model to the given observation mjds.
+        Apply the augmentation model to the given observation time moments.
         
         Parameters:
         -----------
@@ -182,6 +225,6 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         X_ss = self.ss_x.transform(X)
         
         flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss)).reshape(-1, )
-        flux_err_pred = np.zeros(flux_pred.shape)
+        flux_err_pred = np.full_like(flux_pred, self.flux_err)
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred
