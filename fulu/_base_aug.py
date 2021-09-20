@@ -41,6 +41,10 @@ class BaseAugmentation(ABC):
     def __init__(self, passband2lam):
         self.passband2lam = passband2lam
         self.colors = {key: tone for key, tone in zip(passband2lam.keys(), mcolors.TABLEAU_COLORS.keys())}
+        self.t_train = None
+        self.flux_train = None
+        self.flux_err_train = None
+        self.passband_train = None
 
     @abstractmethod
     def fit(self, t, flux, flux_err, passband):
@@ -58,6 +62,12 @@ class BaseAugmentation(ABC):
         passband : array-like
             Passband IDs for each observation.
         """
+        
+        self.t_train = t
+        self.flux_train = flux
+        self.flux_err_train = flux_err
+        self.passband_train = passband
+        
         raise NotImplemented
 
     @abstractmethod
@@ -218,14 +228,14 @@ class BaseAugmentation(ABC):
                 t_max = t_train.max()
                 self.plot_approx(t_min, t_max, passband, ax)
 
-    def plot_true_peak(self, true_peak_mjd, ax):
+    def plot_true_peak(self, true_peak, ax):
         """
         """
         
-        ax.axvline(true_peak_mjd, label='true peak', color='black', linewidth=5.5)
+        ax.axvline(true_peak, label='true peak', color='black', linewidth=5.5)
 
     
-    def plot_one_graph(self, t_train, flux_train, flux_err_train, passband_train, *, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=None, title="", save=None):
+    def plot_one_graph(self, t_train=None, flux_train=None, flux_err_train=None, passband_train=None, *, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=None, title="", save=None):
         """
         Plotting test and train points of light curve with errors for all passbands on one graph by default.
 
@@ -261,13 +271,20 @@ class BaseAugmentation(ABC):
         
         if ax is None:
             ax = self.ax_adjust()
+        
+        if (t_train is None)&(flux_train is None)&(flux_err_train is None)&(passband_train is None):
 
+            t_train = self.t_train
+            flux_train = self.flux_train
+            flux_err_train = self.flux_err_train
+            passband_train = self.passband_train
+            
         if passband is not None:
             self.plot_one_graph_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax, t_test, flux_test, flux_err_test, passband_test, t_approx, flux_approx, flux_err_approx, passband_approx, plot_peak)
 
         else:
             for band in self.passband2lam.keys():
-                self.plot_one_graph_passband(t_train, flux_train, flux_err_train, passband_train, band, ax, t_test, flux_test, flux_err_test, passband_test, anobject_approx, plot_peak)
+                self.plot_one_graph_passband(t_train, flux_train, flux_err_train, passband_train, band, ax, t_test, flux_test, flux_err_test, passband_test, t_approx, flux_approx, flux_err_approx, passband_approx, plot_peak)
 
         if true_peak is not None:
             self.plot_true_peak(true_peak, ax)
