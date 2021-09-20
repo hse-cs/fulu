@@ -231,11 +231,26 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         Example: 
             passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23), 
                              3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    batch_size : int
+        A number of observations to take for the model optimization.
+        Example:
+            batch_size = 500
+    n_epochs : int
+        A number of epoches for the model optimization.
+        Example:
+            n_epochs = 3000
+    lr : float
+        A learning rate value of the optimization.
+        Example:
+            lr = 0.005
     """
     
-    def __init__(self, passband2lam, device='cpu'):
+    def __init__(self, passband2lam, batch_size=500, n_epochs=3000, lr=0.005, device='cpu'):
         super().__init__(passband2lam)
 
+        self.batch_size = batch_size
+        self.n_epochs = n_epochs
+        self.lr = lr
         self.device = device
         
         self.passband2lam = passband2lam
@@ -271,15 +286,15 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         self.ss = StandardScaler()
         X_ss = self.ss.fit_transform(X)
         
-        self.reg = NFFitter(var_size=2, cond_size=2, normalize_y=True, batch_size=500,
-                            n_epochs=3000, lr=0.005, randomize_x=True, device=self.device)
+        self.reg = NFFitter(var_size=2, cond_size=2, normalize_y=True, batch_size=self.batch_size,
+                            n_epochs=self.n_epochs, lr=self.lr, randomize_x=True, device=self.device)
         self.reg.fit(X_ss, flux, flux_err)
 
         return self
     
     def predict(self, t, passband):
         """
-        Apply the augmentation model to the given observation mjds.
+        Apply the augmentation model to the given observation time moments.
         
         Parameters:
         -----------
