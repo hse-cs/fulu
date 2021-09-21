@@ -126,11 +126,11 @@ class BaseAugmentation(ABC):
         return t_aug, flux_aug, flux_err_aug, passband_aug
     
                     
-    def _plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, plot_approx, plot_peak, n_obs):
+    def _plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, plot_approx, n_obs):
         """
         """
         
-        Plotting_lc(self.passband2lam).errorbar_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax)
+        Plotting_lc(self.passband2lam).errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax)
         
         
         if plot_approx:
@@ -144,9 +144,9 @@ class BaseAugmentation(ABC):
                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
                          color=self.plot.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
         
-            if plot_peak:
-                self.plot.plot_sum_passbands(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
-                self.plot.plot_peak(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
+#             if plot_peak:
+#                 self.plot.plot_sum_passbands(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
+#                 self.plot.plot_peak(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
 
 
  
@@ -158,15 +158,19 @@ class BaseAugmentation(ABC):
             ax = self.plot._ax_adjust()
             
         if passband is not None:
-            self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, passband, ax, plot_approx, plot_peak, n_obs)
+            self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, passband, ax, plot_approx, n_obs)
 
         else:
             for band in self.passband2lam.keys():
                 #print(band, self.t_train)
-                self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, band, ax, plot_approx, plot_peak, n_obs)
+                self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, band, ax, plot_approx, n_obs)
 
         if true_peak is not None:
-            self.plot.plot_true_peak(true_peak, ax)
+            self.plot.plot_true_peak(true_peak=true_peak, ax=ax)
+            
+        if plot_peak:
+            self.plot.plot_sum_passbands(t_approx=self.t_approx, flux_approx=self.flux_approx, flux_err_approx=self.flux_err_approx, passband_approx=self.passband_approx, ax=ax)
+            self.plot.plot_peak(t_approx=self.t_approx, flux_approx=self.flux_approx, flux_err_approx=self.flux_err_approx, passband_approx=self.passband_approx, ax=ax)
 
         ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)

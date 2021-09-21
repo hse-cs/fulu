@@ -42,10 +42,12 @@ class Plotting_lc():
 
         return ax
 
-    def errorbar_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, t_test=None, flux_test=None, flux_err_test=None, passband_test=None):
+    def errorbar_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None):
         """
         """
-
+        if ax is None:
+            ax = self._ax_adjust()
+            
         anobject_train = self._make_dataframe(t_train, flux_train, flux_err_train, passband_train)
         anobject_train = anobject_train.sort_values('time')
         light_curve_train = anobject_train[anobject_train['passband'] == passband]
@@ -67,67 +69,71 @@ class Plotting_lc():
                          fmt='.', color=self.colors[passband], label=str(passband)+' test')
 
 
-    def plot_sum_passbands(self, t_approx, flux_approx, flux_err_approx, passband_approx, ax):
+    def plot_sum_passbands(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None):
         """
         """
+        
+        if ax is None:
+            ax = self._ax_adjust()
+        if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):   
+            anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
+            anobject_approx = anobject_approx.sort_values('time')
+            curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
+            ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
 
+    def plot_peak(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None):
+        """
+        """
+        
+        if ax is None:
+            ax = self._ax_adjust()
+        if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
+            anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
+            curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
+            pred_peak = curve['time'][curve['flux'].argmax()]
+            ax.axvline(pred_peak, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
+
+    def plot_approx(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, passband, ax=None):
+        """
+        """
+        
+        if ax is None:
+            ax = self._ax_adjust()
+            
         anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
         anobject_approx = anobject_approx.sort_values('time')
-        curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
-        ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
-
-    def plot_peak(self, t_approx, flux_approx, flux_err_approx, passband_approx, ax):
-        """
-        """
-
-        anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
-        curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
-        pred_peak = curve['time'][curve['flux'].argmax()]
-        ax.axvline(pred_peak, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
-    
-#     def plot_approx(self, t_min, t_max, passband, ax, plot_peak=None):
-#         """
-#         """
+        light_curve_approx = anobject_approx[anobject_approx.passband == passband]
+        ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
+                        linewidth=3.5, color=self.colors[passband], label=str(passband) + ' approx flux', zorder=10)
+        ax.fill_between(light_curve_approx['time'].values,
+                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
+                                light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
+                         color=self.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
         
-#         anobject_approx = self.augmentation(t_min, t_max)
-#         anobject_approx = self.compile_obj(*anobject_approx)
-#         anobject_approx = anobject_approx.sort_values('time')
-#         light_curve_approx = anobject_approx[anobject_approx.passband == passband]
-#         ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
-#                         linewidth=3.5, color=self.colors[passband], label=str(passband) + ' approx flux', zorder=10)
-#         ax.fill_between(light_curve_approx['time'].values,
-#                                 light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
-#                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
-#                          color=self.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
         
-#         if plot_peak is not None:
-#             self.plot_sum_passbands(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
-#             self.plot_peak(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
                     
-    def plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, *, passband, ax, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, plot_peak=None):
+    def plot_one_graph_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None):
         """
         """
+        if ax is None:
+            ax = self._ax_adjust()
+            
+        self.errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_test=t_test, flux_test=flux_test, flux_err_test=flux_err_test, passband_test=passband_test)
+        
+        if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
+            self.plot_approx(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, passband=passband, ax=ax)
 
-        self.errorbar_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax, t_test, flux_test, flux_err_test, passband_test)
-        anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
-        if anobject_approx is not None:
-            if t_test is not None:
-                t_min = min(t_train.min(), t_test.min())
-                t_max = max(t_train.max(), t_test.max())
-                self.plot_approx(t_min, t_max, passband, ax)
-            else:
-                t_min = t_train.min()
-                t_max = t_train.max()
-                self.plot_approx(t_min, t_max, passband, ax)
-
-    def plot_true_peak(self, true_peak, ax):
+    def plot_true_peak(self, *, true_peak, ax=None):
         """
         """
         
+        if ax is None:
+            ax = self._ax_adjust()
+            
         ax.axvline(true_peak, label='true peak', color='black', linewidth=5.5)
 
     
-    def plot_one_graph_all(self, t_train, flux_train, flux_err_train, passband_train, *, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=None, title="", save=None):
+    def plot_one_graph_all(self, *, t_train, flux_train, flux_err_train, passband_train, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None):
         """
         Plotting test and train points of light curve with errors for all passbands on one graph by default.
 
@@ -165,14 +171,18 @@ class Plotting_lc():
             ax = self._ax_adjust()
             
         if passband is not None:
-            self.plot_one_graph_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax, t_approx, flux_approx, flux_err_approx, passband_approx, plot_peak)
+            self.plot_one_graph_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
 
         else:
             for band in self.passband2lam.keys():
-                self.plot_one_graph_passband(t_train, flux_train, flux_err_train, passband_train, band, ax, t_test, flux_test, flux_err_test, passband_test, t_approx, flux_approx, flux_err_approx, passband_approx, plot_peak)
+                self.plot_one_graph_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=band, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
 
         if true_peak is not None:
             self.plot_true_peak(true_peak, ax)
+        
+        if plot_peak:
+            self.plot_sum_passbands(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, ax=ax)
+            self.plot_peak(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, ax=ax)
 
         ax.set_title(title, size=35)
         ax.legend(loc='best', ncol=3, fontsize=20)
