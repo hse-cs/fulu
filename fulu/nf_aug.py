@@ -281,6 +281,11 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         passband = np.array(passband)
         log_lam  = add_log_lam(passband, self.passband2lam)
         
+        self.t_train = t
+        self.flux_train = flux
+        self.flux_err_train = flux_err
+        self.passband_train = passband
+        
         X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
         
         self.ss = StandardScaler()

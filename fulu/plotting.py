@@ -28,9 +28,9 @@ class Plotting_lc():
         """
         """
 
-        fig = plt.figure(figsize=(20,10), dpi = 50)
+        fig = plt.figure(figsize=(20,10), dpi = 100)
         plt.rcParams.update({'font.size': 30})
-        fig.subplots_adjust(left=0.07, right=0.98, top=0.95, bottom=0.15)   
+        fig.subplots_adjust(left=0.07, right=0.98, top=0.90, bottom=0.15)   
         ax = plt.subplot(1, 1, 1)
         ax.spines['bottom'].set_linewidth(3)
         ax.spines['top'].set_linewidth(3)
@@ -46,9 +46,9 @@ class Plotting_lc():
         """
         """
 
-        anobject_train = self.compile_obj(t_train, flux_train, flux_err_train, passband_train)
+        anobject_train = self._make_dataframe(t_train, flux_train, flux_err_train, passband_train)
         anobject_train = anobject_train.sort_values('time')
-        light_curve_train = anobject_train[anobject_train.passband == passband]
+        light_curve_train = anobject_train[anobject_train['passband'] == passband]
 
         ax.errorbar(light_curve_train['time'].values, light_curve_train['flux'].values,
                          yerr=light_curve_train['flux_err'].values, linewidth=3.5,
@@ -56,10 +56,10 @@ class Plotting_lc():
                markeredgecolor='black', markeredgewidth=1.50,
                          fmt='.', color=self.colors[passband], label=str(passband)+' train')
         
-        anobject_test = self.compile_obj(t_test, flux_test, flux_err_test, passband_test)
+        anobject_test = self._make_dataframe(t_test, flux_test, flux_err_test, passband_test)
         if anobject_test is not None:
             anobject_test = anobject_test.sort_values('time')
-            light_curve_test = anobject_test[anobject_test.passband == passband]
+            light_curve_test = anobject_test[anobject_test['passband'] == passband]
             ax.errorbar(light_curve_test['time'].values, light_curve_test['flux'].values,
                          yerr=light_curve_test['flux_err'].values, linewidth=3.5,
                          marker='o', elinewidth=1.7 ,markersize=14.50,
@@ -71,8 +71,8 @@ class Plotting_lc():
         """
         """
 
-        anobject_approx = self.compile_obj(t_approx, flux_approx, flux_err_approx, passband_approx)
-        anobject_approx = anobject_train.sort_values('time')
+        anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
+        anobject_approx = anobject_approx.sort_values('time')
         curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
         ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
 
@@ -80,7 +80,7 @@ class Plotting_lc():
         """
         """
 
-        anobject_approx = self.compile_obj(t_approx, flux_approx, flux_err_approx, passband_approx)
+        anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
         curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
         pred_peak = curve['time'][curve['flux'].argmax()]
         ax.axvline(pred_peak, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
@@ -109,7 +109,7 @@ class Plotting_lc():
         """
 
         self.errorbar_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax, t_test, flux_test, flux_err_test, passband_test)
-        anobject_approx = self.compile_obj(t_approx, flux_approx, flux_err_approx, passband_approx)
+        anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
         if anobject_approx is not None:
             if t_test is not None:
                 t_min = min(t_train.min(), t_test.min())
