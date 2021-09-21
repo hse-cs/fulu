@@ -129,24 +129,24 @@ class BaseAugmentation(ABC):
 
         return t_aug, flux_aug, flux_err_aug, passband_aug
     
-    def plot_approx(self, t_min, t_max, passband, ax, n_obs=100, plot_peak=None):
-        """
-        """
+#     def plot_approx(self, t_min, t_max, passband, ax, n_obs=100, plot_peak=None):
+#         """
+#         """
         
-        anobject_approx = self.augmentation(t_min, t_max, n_obs)
-        anobject_approx = Plotting_lc._make_dataframe(*anobject_approx)
-        anobject_approx = anobject_approx.sort_values('time')
-        light_curve_approx = anobject_approx[anobject_approx.passband == passband]
-        ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
-                        linewidth=3.5, color=Plotting_lc.colors[passband], label=str(passband) + ' approx flux', zorder=10)
-        ax.fill_between(light_curve_approx['time'].values,
-                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
-                                light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
-                         color=Plotting_lc.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
+#         anobject_approx = self.augmentation(t_min, t_max, n_obs)
+#         anobject_approx = Plotting_lc._make_dataframe(*anobject_approx)
+#         anobject_approx = anobject_approx.sort_values('time')
+#         light_curve_approx = anobject_approx[anobject_approx.passband == passband]
+#         ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
+#                         linewidth=3.5, color=Plotting_lc.colors[passband], label=str(passband) + ' approx flux', zorder=10)
+#         ax.fill_between(light_curve_approx['time'].values,
+#                                 light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
+#                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
+#                          color=Plotting_lc.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
         
-        if plot_peak is not None:
-            Plotting_lc.plot_sum_passbands(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
-            Plotting_lc.plot_peak(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
+#         if plot_peak is not None:
+#             Plotting_lc.plot_sum_passbands(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
+#             Plotting_lc.plot_peak(t_approx, flux_approx, flux_err_approx, passband_approx, ax)
                     
     def _plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, plot_approx, plot_peak, n_obs):
         """
@@ -154,10 +154,26 @@ class BaseAugmentation(ABC):
 
         Plotting_lc.errorbar_passband(t_train, flux_train, flux_err_train, passband_train, passband, ax)
         anobject_approx = Plotting_lc._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
+        
         if plot_approx:
-            t_min = t_train.min()
-            t_max = t_train.max()
-            self.plot_approx(t_min, t_max, passband, ax, n_obs, plot_peak)
+            anobject_approx = Plotting_lc._make_dataframe(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx)
+            anobject_approx = anobject_approx.sort_values('time')
+            light_curve_approx = anobject_approx[anobject_approx.passband == passband]
+            ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
+                        linewidth=3.5, color=Plotting_lc.colors[passband], label=str(passband) + ' approx flux', zorder=10)
+            ax.fill_between(light_curve_approx['time'].values,
+                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
+                                light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
+                         color=Plotting_lc.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
+        
+            if plot_peak is not None:
+                Plotting_lc.plot_sum_passbands(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
+                Plotting_lc.plot_peak(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
+
+#             t_min = t_train.min()
+#             t_max = t_train.max()
+#             self.plot_approx(t_min, t_max, passband, ax, n_obs, plot_peak)
+
  
     def plot_one_graph(self, *, plot_approx = True, passband=None, ax=None, true_peak=None, plot_peak=None, title="", save=None, n_obs = 100):
         """
