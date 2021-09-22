@@ -39,7 +39,6 @@ class Plotting_lc():
         ax.set_xlabel('Time', size=30)
         ax.set_ylabel('Flux', size=30)
         ax.grid(linewidth=2)
-        #ax.set_title(title, size=35, pad = 15)
 
         return ax
 
@@ -154,29 +153,28 @@ class Plotting_lc():
     
     def plot_one_graph_all(self, *, t_train, flux_train, flux_err_train, passband_train, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None):
         """
-        Plotting test and train points of light curve with errors for all passbands on one graph by default.
+        Plotting train points of light curve with errors for all passbands on one graph by default.
 
         If you submit the name passband, only the submitted passband is built.
 
         If you submit augmented data, a black solid curve is plotted at the predicted points.
         The predicted flux errors are also plotted using a gray bar.
 
-        It is assumed that your light curve is containing:
-        observation time;
-        flux;
-        flux errors;
-        passbands.
-
         Parameters:
         -----------
-        anobject_test, anobject_train : list or array-like
-            Lists of lists (time, flux, error of flux, passbands) for one object from your dataset after split.
-        passband : format in which the name of the passband is specified in your table
-        anobject_approx : list or array-like
-            List of lists (time, flux, error of flux, passbands) for current object after augmentation.
+        t_train, t_approx : array-like
+            Timestamps of light curve observations, which are used in fit method\after augmentation.
+        flux_train, flux_approx : array-like
+            Flux of the light curve observations, which are used in fit method\after augmentation.
+        flux_err_train, flux_err_approx : array-like
+            Flux errors of the light curve observations, which are used in fit method\after augmentation.
+        passband_train, passband_approx : array-like
+            Passband IDs for each observation, which are used in fit method\after augmentation.
+        passband : str or int or float
+            Passband ID.
         ax : matplotlib.pyplot.subplot object
             You can set the axis as an element of your matplotlib.pyplot.figure object.
-        true_peak_mjd : float or int
+        true_peak : float or int
             The real peak of the light curve flux.
         plot_peak : bool or int
             Flag is responsible for plotting peak by max flux of overall flux. 

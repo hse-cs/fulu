@@ -128,6 +128,26 @@ class BaseAugmentation(ABC):
                     
     def _plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, plot_approx, n_obs):
         """
+        The private method for helping to construct a light curve in the next method plot_one_graph.
+        
+        Parameters:
+        -----------
+        t_train : array-like
+            Timestamps of light curve observations, which are used in fit method.
+        flux_train : array-like
+            Flux of the light curve observations, which are used in fit method.
+        flux_err_train : array-like
+            Flux errors of the light curve observations, which are used in fit method.
+        passband_train : array-like
+            Passband IDs for each observation, which are used in fit method.
+        passband : str or int or float
+            Passband ID.
+        ax : matplotlib.pyplot.subplot object
+            You can set the axis as an element of your matplotlib.pyplot.figure object.
+        plot_approx : bool or int
+            Flag indicating it is required to build an approximation curve or isn't.
+        n_obs : int
+            Number of observations in each passband required.
         """
         
         Plotting_lc(self.passband2lam).errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax)
@@ -147,6 +167,28 @@ class BaseAugmentation(ABC):
  
     def plot_one_graph(self, *, plot_approx = True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_obs = 100):
         """
+        Plotting train points of light curve with errors for all passbands on one graph by default. A black solid curve isn't plotted at the predicted points. The predicted flux errors are also plotted using a gray bar.
+
+        If you submit the name passband, only the submitted passband is built.
+
+        Parameters:
+        -----------
+        plot_approx : bool
+            Flag indicating it is required to build an approximation curve or isn't.
+        passband : str or int or float
+            Passband ID.
+        ax : matplotlib.pyplot.subplot object
+            You can set the axis as an element of your matplotlib.pyplot.figure object.
+        true_peak : float or int
+            The real peak of the light curve flux.
+        plot_peak : bool or int
+            Flag is responsible for plotting peak by max flux of overall flux. 
+        title : str
+            The name of the graph set by ax.
+        save : str
+            The name for saving graph (in pdf format).
+        n_obs : int
+            Number of observations in each passband required.
         """
 
         if ax is None:
@@ -170,4 +212,4 @@ class BaseAugmentation(ABC):
         ax.legend(loc='best', ncol=3, fontsize=20)
         if save is not None:
             plt.savefig(save + ".pdf", format='pdf')
-        
+        return ax
