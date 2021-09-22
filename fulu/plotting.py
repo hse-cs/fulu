@@ -24,7 +24,7 @@ class Plotting_lc():
             return obj
         return None
     
-    def _ax_adjust(self):
+    def _ax_adjust(self, *, title=""):
         """
         """
 
@@ -39,14 +39,16 @@ class Plotting_lc():
         ax.set_xlabel('Time', size=30)
         ax.set_ylabel('Flux', size=30)
         ax.grid(linewidth=2)
+        #ax.set_title(title, size=35, pad = 15)
 
         return ax
 
-    def errorbar_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None):
+    def errorbar_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, title=""):
         """
         """
+        
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
             
         anobject_train = self._make_dataframe(t_train, flux_train, flux_err_train, passband_train)
         anobject_train = anobject_train.sort_values('time')
@@ -67,38 +69,47 @@ class Plotting_lc():
                          marker='o', elinewidth=1.7 ,markersize=14.50,
                markeredgecolor='black', markeredgewidth=1.50,
                          fmt='.', color=self.colors[passband], label=str(passband)+' test')
+        ax.legend(loc='best', ncol=3, fontsize=20)    
+        ax.set_title(title, size=35, pad = 15)
+        return ax
 
 
-    def plot_sum_passbands(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None):
+    def plot_sum_passbands(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None, title=""):
         """
         """
         
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):   
             anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
             anobject_approx = anobject_approx.sort_values('time')
             curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
             ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
+            ax.legend(loc='best', ncol=3, fontsize=20)
+            ax.set_title(title, size=35, pad = 15)
+        return ax
 
-    def plot_peak(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None):
+    def plot_peak(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None, title=""):
         """
         """
         
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
             anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
             curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
             pred_peak = curve['time'][curve['flux'].argmax()]
             ax.axvline(pred_peak, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
+            ax.legend(loc='best', ncol=3, fontsize=20)
+            ax.set_title(title, size=35, pad = 15)
+        return ax
 
-    def plot_approx(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, passband, ax=None):
+    def plot_approx(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, passband, ax=None, title=""):
         """
         """
         
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
             
         anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
         anobject_approx = anobject_approx.sort_values('time')
@@ -109,28 +120,36 @@ class Plotting_lc():
                                 light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
                          color=self.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
-        
+        ax.legend(loc='best', ncol=3, fontsize=20)
+        ax.set_title(title, size=35, pad = 15)
+        return ax
         
                     
-    def plot_one_graph_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None):
+    def plot_one_graph_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, title=""):
         """
         """
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
             
         self.errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_test=t_test, flux_test=flux_test, flux_err_test=flux_err_test, passband_test=passband_test)
         
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
             self.plot_approx(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, passband=passband, ax=ax)
+            
+        ax.legend(loc='best', ncol=3, fontsize=20)
+        ax.set_title(title, size=35, pad = 15)
+        return ax
 
-    def plot_true_peak(self, *, true_peak, ax=None):
+    def plot_true_peak(self, *, true_peak, ax=None, title=""):
         """
         """
         
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
             
         ax.axvline(true_peak, label='true peak', color='black', linewidth=5.5)
+        ax.set_title(title, size=35, pad = 15)
+        return ax
 
     
     def plot_one_graph_all(self, *, t_train, flux_train, flux_err_train, passband_train, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None):
@@ -168,7 +187,7 @@ class Plotting_lc():
         """
         
         if ax is None:
-            ax = self._ax_adjust()
+            ax = self._ax_adjust(title=title)
             
         if passband is not None:
             self.plot_one_graph_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
@@ -184,7 +203,9 @@ class Plotting_lc():
             self.plot_sum_passbands(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, ax=ax)
             self.plot_peak(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, ax=ax)
 
-        ax.set_title(title, size=35)
+        ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)
         if save is not None:
             plt.savefig(save + ".pdf", format='pdf')
+        
+        return ax

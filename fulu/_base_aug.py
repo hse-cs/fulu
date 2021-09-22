@@ -143,11 +143,6 @@ class BaseAugmentation(ABC):
                                 light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
                                 light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
                          color=self.plot.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
-        
-#             if plot_peak:
-#                 self.plot.plot_sum_passbands(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
-#                 self.plot.plot_peak(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx, ax)
-
 
  
     def plot_one_graph(self, *, plot_approx = True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_obs = 100):
@@ -155,14 +150,13 @@ class BaseAugmentation(ABC):
         """
 
         if ax is None:
-            ax = self.plot._ax_adjust()
+            ax = self.plot._ax_adjust(title=title)
             
         if passband is not None:
             self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, passband, ax, plot_approx, n_obs)
 
         else:
             for band in self.passband2lam.keys():
-                #print(band, self.t_train)
                 self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, band, ax, plot_approx, n_obs)
 
         if true_peak is not None:
