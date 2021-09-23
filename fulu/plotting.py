@@ -128,7 +128,7 @@ class Plotting_lc():
         """
         """
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
             
         self.errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_test=t_test, flux_test=flux_test, flux_err_test=flux_err_test, passband_test=passband_test)
         
