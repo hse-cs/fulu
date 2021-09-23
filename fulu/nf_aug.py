@@ -274,11 +274,8 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         passband : array-like
             Passband IDs for each observation.
         """
-        
-        t        = np.array(t)
-        flux     = np.array(flux)
-        flux_err = np.array(flux_err)
-        passband = np.array(passband)
+
+        super().fit(t, flux, flux_err, passband)
         log_lam  = add_log_lam(passband, self.passband2lam)
         
         self.t_train = t

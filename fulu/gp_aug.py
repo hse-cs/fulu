@@ -50,11 +50,8 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         passband : array-like
             Passband IDs for each observation.
         """
+        super().fit(t, flux, flux_err, passband)
 
-        t        = np.array(t)
-        flux     = np.array(flux)
-        flux_err = np.array(flux_err)
-        passband = np.array(passband)
         log_lam  = add_log_lam(passband, self.passband2lam)
 
         X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
