@@ -12,11 +12,17 @@ def subclasses(cls):
 
 
 def sample_data():
-    passband2lam = {'u': np.log10(3751.36), 'g': np.log10(4741.64), 'r': np.log10(6173.23),
-                    'i': np.log10(7501.62), 'z': np.log10(8679.19), 'y': np.log10(9711.53)}
+    passband2lam = {
+        "u": np.log10(3751.36),
+        "g": np.log10(4741.64),
+        "r": np.log10(6173.23),
+        "i": np.log10(7501.62),
+        "z": np.log10(8679.19),
+        "y": np.log10(9711.53),
+    }
     n_per_band = 10
     n = n_per_band * len(passband2lam)
-    t = np.linspace(0.0, n-1, n)
+    t = np.linspace(0.0, n - 1, n)
     flux = 10.0 + np.sin(t)
     flux_err = np.ones_like(flux)
     passbands = np.tile(list(passband2lam), n_per_band)
@@ -28,10 +34,19 @@ def sample_data():
     [(cls, {}) for cls in subclasses(BaseAugmentation)]
     + [
         (GaussianProcessesAugmentation, dict(use_err=True)),
-        (GaussianProcessesAugmentation, dict(kernel=ConstantKernel(1.0)*RBF([1, 1]) + Matern() + WhiteKernel())),
+        (GaussianProcessesAugmentation, dict(kernel=ConstantKernel(1.0) * RBF([1, 1]) + Matern() + WhiteKernel())),
         (NormalizingFlowAugmentation, dict(batch_size=100, n_epochs=1000, lr=0.01)),
-        (MLPRegressionAugmentation, dict(hidden_layer_sizes=(20), solver='lbfgs', activation='relu',
-                                         learning_rate_init=0.005, max_iter=50, batch_size=2)),
+        (
+            MLPRegressionAugmentation,
+            dict(
+                hidden_layer_sizes=(20),
+                solver="lbfgs",
+                activation="relu",
+                learning_rate_init=0.005,
+                max_iter=50,
+                batch_size=2,
+            ),
+        ),
     ],
 )
 def test_aug_with_sample_data(cls, init_kwargs):
@@ -41,7 +56,7 @@ def test_aug_with_sample_data(cls, init_kwargs):
     t, *_ = lc
     aug = cls(passband2lam, **init_kwargs)
     aug_fit = aug.fit(*lc)
-    assert aug_fit is aug, '.fit() must return self'
+    assert aug_fit is aug, ".fit() must return self"
     t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), n_aug)
     assert_allclose(t_aug, np.tile(np.linspace(t.min(), t.max(), n_aug), n_band))
     assert flux_aug.size == n_aug * n_band
