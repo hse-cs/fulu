@@ -136,10 +136,7 @@ class BayesianNetAugmentation(BaseAugmentation):
         passband : array-like
             Passband IDs for each observation.
         """
-        self.t_train = t
-        self.flux_train = flux
-        self.flux_err_train = flux_err
-        self.passband_train = passband
+        super().fit(t, flux, flux_err, passband)
         
         X = self._preproc_features(t, passband)
         self.ss_x = StandardScaler().fit(X)

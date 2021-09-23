@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
-import fulu.plotting
-from fulu.plotting import Plotting_lc
+
+from fulu.plotting import LcPlotter
 
 
 def add_log_lam(passband, passband2lam):
@@ -41,16 +40,11 @@ class BaseAugmentation(ABC):
 
     def __init__(self, passband2lam):
         self.passband2lam = passband2lam
-        self.plot = fulu.plotting.Plotting_lc(passband2lam)
+        self.plotter = LcPlotter(passband2lam)
         self.t_train = None
         self.flux_train = None
         self.flux_err_train = None
         self.passband_train = None
-        
-        self.t_approx = None
-        self.flux_approx = None
-        self.flux_err_approx = None
-        self.passband_approx = None
 
     @abstractmethod
     def fit(self, t, flux, flux_err, passband):
@@ -68,8 +62,10 @@ class BaseAugmentation(ABC):
         passband : array-like
             Passband IDs for each observation.
         """
-        
-        raise NotImplemented
+        self.t_train = np.asarray(t)
+        self.flux_train = np.asarray(flux)
+        self.flux_err_train = np.asarray(flux_err)
+        self.passband_train = np.asarray(passband)
 
     @abstractmethod
     def predict(self, t, passband):
@@ -117,55 +113,38 @@ class BaseAugmentation(ABC):
 
         t_aug, passband_aug = create_aug_data(t_min, t_max, tuple(self.passband2lam), n_obs)
         flux_aug, flux_err_aug = self.predict(t_aug, passband_aug)
-        
-        self.t_approx = t_aug
-        self.flux_approx = flux_aug
-        self.flux_err_approx = flux_err_aug
-        self.passband_approx = passband_aug
 
         return t_aug, flux_aug, flux_err_aug, passband_aug
-    
-                    
-    def _plot_one_graph_passband(self, t_train, flux_train, flux_err_train, passband_train, passband, ax, plot_approx, n_obs):
+
+    def _plot_passband(self, passband, ax, approx=None):
         """
-        The private method for helping to construct a light curve in the next method plot_one_graph.
+        Helper to construct a light curve in the next method plotter.
         
         Parameters:
         -----------
-        t_train : array-like
-            Timestamps of light curve observations, which are used in fit method.
-        flux_train : array-like
-            Flux of the light curve observations, which are used in fit method.
-        flux_err_train : array-like
-            Flux errors of the light curve observations, which are used in fit method.
-        passband_train : array-like
-            Passband IDs for each observation, which are used in fit method.
+        approx : tuple of array-like or None
+            Augumentated light curve
         passband : str or int or float
-            Passband ID.
+            A key of self.passband2lam dict
         ax : matplotlib.pyplot.subplot object
             You can set the axis as an element of your matplotlib.pyplot.figure object.
-        plot_approx : bool or int
-            Flag indicating it is required to build an approximation curve or isn't.
-        n_obs : int
-            Number of observations in each passband required.
         """
         
-        Plotting_lc(self.passband2lam).errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax)
+        LcPlotter(self.passband2lam).errorbar_passband(t=self.t_train, flux=self.flux_train, flux_err=self.flux_err_train,
+                                                       passbands=self.passband_train, passband=passband, ax=ax)
         
-        
-        if plot_approx:
-            anobject_approx = self.plot._make_dataframe(self.t_approx, self.flux_approx, self.flux_err_approx, self.passband_approx)
+        if approx:
+            anobject_approx = self.plotter._make_dataframe(*approx)
             anobject_approx = anobject_approx.sort_values('time')
             light_curve_approx = anobject_approx[anobject_approx.passband == passband]
-            ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
-                        linewidth=3.5, color=self.plot.colors[passband], label=str(passband) + ' approx flux', zorder=10)
+            ax.plotter(light_curve_approx['time'].values, light_curve_approx['flux'].values,
+                       linewidth=3.5, color=self.plotter.colors[passband], label=str(passband) + ' approx flux', zorder=10)
             ax.fill_between(light_curve_approx['time'].values,
-                                light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
-                                light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
-                         color=self.plot.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
+                            light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
+                            light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
+                            color=self.plotter.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
 
- 
-    def plot_one_graph(self, *, plot_approx = True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_obs = 100):
+    def plot(self, *, plot_approx=True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_approx=1000):
         """
         Plotting train points of light curve with errors for all passbands on one graph by default. A black solid curve isn't plotted at the predicted points. The predicted flux errors are also plotted using a gray bar.
 
@@ -176,40 +155,43 @@ class BaseAugmentation(ABC):
         plot_approx : bool
             Flag indicating it is required to build an approximation curve or isn't.
         passband : str or int or float
-            Passband ID.
-        ax : matplotlib.pyplot.subplot object
+            Key of self.passband2lam dict.
+        ax : matplotlib.pyplot.subplot object or None
             You can set the axis as an element of your matplotlib.pyplot.figure object.
-        true_peak : float or int
+        true_peak : float
             The real peak of the light curve flux.
         plot_peak : bool or int
             Flag is responsible for plotting peak by max flux of overall flux. 
         title : str
             The name of the graph set by ax.
-        save : str
-            The name for saving graph (in pdf format).
-        n_obs : int
-            Number of observations in each passband required.
+        save : str or None
+            The path for saving graph.
+        n_approx : int
+            Number of approximation points in each passband.
         """
 
         if ax is None:
-            ax = self.plot._ax_adjust(title=title)
-            
-        if passband is not None:
-            self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, passband, ax, plot_approx, n_obs)
+            ax = self.plotter._ax_adjust()
 
+        approx = self.augmentation(np.min(self.t_train), np.max(self.t_train), n_approx)
+        if plot_approx is not None:
+            plot_approx = approx
+
+        if passband is not None:
+            self._plot_passband(passband, ax, plot_approx)
         else:
             for band in self.passband2lam.keys():
-                self._plot_one_graph_passband(self.t_train, self.flux_train, self.flux_err_train, self.passband_train, band, ax, plot_approx, n_obs)
+                self._plot_passband(band, ax, plot_approx)
 
         if true_peak is not None:
-            self.plot.plot_true_peak(true_peak=true_peak, ax=ax)
+            self.plotter.plot_true_peak(true_peak=true_peak, ax=ax)
             
         if plot_peak:
-            self.plot.plot_sum_passbands(t_approx=self.t_approx, flux_approx=self.flux_approx, flux_err_approx=self.flux_err_approx, passband_approx=self.passband_approx, ax=ax)
-            self.plot.plot_peak(t_approx=self.t_approx, flux_approx=self.flux_approx, flux_err_approx=self.flux_err_approx, passband_approx=self.passband_approx, ax=ax)
+            self.plotter.plot_sum_passbands(*approx, ax=ax)
+            self.plotter.plot_peak(*approx, ax=ax)
 
         ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)
         if save is not None:
-            plt.savefig(save + ".pdf", format='pdf')
+            plt.savefig(save)
         return ax

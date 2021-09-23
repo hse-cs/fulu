@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-class Plotting_lc():
+class LcPlotter:
     
     def __init__(self, passband2lam):
         self.passband2lam = passband2lam
@@ -14,17 +14,18 @@ class Plotting_lc():
     def _make_dataframe(self, t, flux, flux_err, passband):
         """
         """
-        
-        if (t is not None)&(flux is not None)&(flux_err is not None)&(passband is not None):
-            obj = pd.DataFrame()
-            obj['time']      = t
-            obj['flux']     = flux
-            obj['flux_err'] = flux_err
-            obj['passband'] = passband
-            return obj
-        return None
-    
-    def _ax_adjust(self, *, title=""):
+
+        if t is None or flux is None or flux_err is None or passband is None:
+            raise ValueError("All values must be numerical arrays")
+
+        obj = pd.DataFrame()
+        obj['time']     = t
+        obj['flux']     = flux
+        obj['flux_err'] = flux_err
+        obj['passband'] = passband
+        return obj
+
+    def _ax_adjust(self):
         """
         """
 
@@ -42,38 +43,29 @@ class Plotting_lc():
 
         return ax
 
-    def errorbar_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, title=""):
+    def errorbar_passband(self, t, flux, flux_err, passbands, passband, *, ax=None, title="", label='', marker='^'):
         """
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
-            
-        anobject_train = self._make_dataframe(t_train, flux_train, flux_err_train, passband_train)
-        anobject_train = anobject_train.sort_values('time')
-        light_curve_train = anobject_train[anobject_train['passband'] == passband]
+            ax = self._ax_adjust()
 
-        ax.errorbar(light_curve_train['time'].values, light_curve_train['flux'].values,
-                         yerr=light_curve_train['flux_err'].values, linewidth=3.5,
-                         marker='^', elinewidth=1.7 ,markersize=14.50,
+        anobject = self._make_dataframe(t, flux, flux_err, passbands)
+        anobject = anobject.sort_values('time')
+        light_curve = anobject[anobject['passband'] == passband]
+
+        ax.errorbar(light_curve['time'].values, light_curve['flux'].values,
+                         yerr=light_curve['flux_err'].values, linewidth=3.5,
+                         marker=marker, elinewidth=1.7 ,markersize=14.50,
                markeredgecolor='black', markeredgewidth=1.50,
-                         fmt='.', color=self.colors[passband], label=str(passband)+' train')
+                         fmt='.', color=self.colors[passband], label='{}{}'.format(passband, label))
         
-        anobject_test = self._make_dataframe(t_test, flux_test, flux_err_test, passband_test)
-        if anobject_test is not None:
-            anobject_test = anobject_test.sort_values('time')
-            light_curve_test = anobject_test[anobject_test['passband'] == passband]
-            ax.errorbar(light_curve_test['time'].values, light_curve_test['flux'].values,
-                         yerr=light_curve_test['flux_err'].values, linewidth=3.5,
-                         marker='o', elinewidth=1.7 ,markersize=14.50,
-               markeredgecolor='black', markeredgewidth=1.50,
-                         fmt='.', color=self.colors[passband], label=str(passband)+' test')
-        ax.legend(loc='best', ncol=3, fontsize=20)    
+        ax.legend(loc='best', ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad = 15)
         return ax
 
 
-    def plot_sum_passbands(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None, title=""):
+    def plot_sum_passbands(self, t_approx, flux_approx, flux_err_approx, passband_approx, *, ax=None, title=""):
         """
         """
         
@@ -83,12 +75,12 @@ class Plotting_lc():
             anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
             anobject_approx = anobject_approx.sort_values('time')
             curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
-            ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
+            ax.plotter(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
             ax.legend(loc='best', ncol=3, fontsize=20)
             ax.set_title(title, size=35, pad = 15)
         return ax
 
-    def plot_peak(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, ax=None, title=""):
+    def plot_peak(self, t_approx, flux_approx, flux_err_approx, passband_approx, *, ax=None, title=""):
         """
         """
         
@@ -103,7 +95,7 @@ class Plotting_lc():
             ax.set_title(title, size=35, pad = 15)
         return ax
 
-    def plot_approx(self, *, t_approx, flux_approx, flux_err_approx, passband_approx, passband, ax=None, title=""):
+    def plot_approx(self, t_approx, flux_approx, flux_err_approx, passband_approx, *, passband, ax=None, title=""):
         """
         """
         
@@ -131,6 +123,7 @@ class Plotting_lc():
             ax = self._ax_adjust()
             
         self.errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_test=t_test, flux_test=flux_test, flux_err_test=flux_err_test, passband_test=passband_test)
+        self.errorbar_passband(t=t_train, flux=flux_train, )
         
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
             self.plot_approx(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, passband=passband, ax=ax)
