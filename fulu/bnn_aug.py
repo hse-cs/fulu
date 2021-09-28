@@ -11,15 +11,15 @@ from fulu._base_aug import BaseAugmentation, add_log_lam
 
 
 class BNNRegressor(nn.Module):
-    def __init__(self, n_inputs=1, n_hidden=10):
+    def __init__(self, n_inputs=1, n_hidden=10, prior_sigma=0.01):
         super(BNNRegressor, self).__init__()
         
         self.model = nn.Sequential(
-                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_inputs, out_features=n_hidden),
-                        nn.LeakyReLU(),
-                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden, out_features=n_hidden // 2),
-                        nn.LeakyReLU(),
-                        bnn.BayesLinear(prior_mu=0, prior_sigma=0.1, in_features=n_hidden // 2, out_features=1))
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=prior_sigma, in_features=n_inputs, out_features=n_hidden),
+                        nn.Tanh(),
+                        #bnn.BayesLinear(prior_mu=0, prior_sigma=prior_sigma, in_features=n_hidden, out_features=n_hidden),
+                        #nn.Tanh(),
+                        bnn.BayesLinear(prior_mu=0, prior_sigma=prior_sigma, in_features=n_hidden, out_features=1))
         
     def forward(self, x):
         return self.model(x)
@@ -27,9 +27,10 @@ class BNNRegressor(nn.Module):
     
 class FitBNNRegressor:
     
-    def __init__(self, n_hidden=10, n_epochs=10, lr=0.01, kl_weight=0.1, optimizer='Adam', debug=0, device='cpu'):
+    def __init__(self, n_hidden=10, prior_sigma=0.01, n_epochs=10, lr=0.01, kl_weight=0.1, optimizer='Adam', debug=0, device='cpu'):
         self.model = None
         self.n_hidden = n_hidden
+        self.prior_sigma = prior_sigma
         self.n_epochs = n_epochs
         self.lr = lr
         self.kl_weight = kl_weight
@@ -39,7 +40,7 @@ class FitBNNRegressor:
 
     def fit(self, X, y):
         # Estimate model
-        self.model = BNNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden)
+        self.model = BNNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden, prior_sigma=self.prior_sigma)
         self.model.to(self.device)
         # Convert X and y into torch tensors
         X_tensor = torch.as_tensor(X, dtype=torch.float32, device=self.device)
@@ -100,13 +101,31 @@ class BayesianNetAugmentation(BaseAugmentation):
         Example:
             passband2lam  = {0: np.log10(3751.36), 1: np.log10(4741.64), 2: np.log10(6173.23),
                              3: np.log10(7501.62), 4: np.log10(8679.19), 5: np.log10(9711.53)}
+    n_hidden : int
+        A number of hidden neurons in the network.
+    prior_sigma : float
+        The standard deviation for a neuron weights prior distribution.
+    n_epochs : int
+        The number of epochs in training.
+    lr : float
+        The learning rate for the network optimization.
+    kl_weight : float
+        The coefficient for a regularization term of a loss function.
+    optimizer : string
+        Optimization algorithm name. Possible values: 'Adam', 'RMSprop', 'SGD'.
     device : str or torch device
         Torch device name, default is 'cpu'
     """
 
-    def __init__(self, passband2lam, device='cpu'):
+    def __init__(self, passband2lam, n_hidden=20, prior_sigma=0.1, n_epochs=3000, lr=0.01, kl_weight=0.0001, optimizer='Adam', device='cpu'):
         super().__init__(passband2lam)
 
+        self.n_hidden = n_hidden
+        self.prior_sigma = prior_sigma
+        self.n_epochs = n_epochs
+        self.lr = lr
+        self.kl_weight = kl_weight
+        self.optimizer = optimizer
         self.device = device
 
         self.ss_x = None
@@ -144,7 +163,12 @@ class BayesianNetAugmentation(BaseAugmentation):
         
         self.ss_y = StandardScaler().fit(flux.reshape((-1, 1)))
         y_ss = self.ss_y.transform(flux.reshape((-1, 1)))
-        self.reg = FitBNNRegressor(n_hidden=40, n_epochs=400, lr=0.05, kl_weight=0.01, optimizer='Adam',
+        self.reg = FitBNNRegressor(n_hidden=self.n_hidden, 
+                                   prior_sigma=self.prior_sigma,
+                                   n_epochs=self.n_epochs, 
+                                   lr=self.lr, 
+                                   kl_weight=self.kl_weight, 
+                                   optimizer=self.optimizer,
                                    device=self.device)
         self.reg.fit(X_ss, y_ss)
         return self
