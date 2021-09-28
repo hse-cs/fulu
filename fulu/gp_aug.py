@@ -26,7 +26,7 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         Flag responsible for using flux error by GP Regressor.
     """
 
-    def __init__(self, passband2lam, kernel = C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), use_err = False):
+    def __init__(self, passband2lam, kernel=C(1.0) * RBF([1.0, 1.0]) + WhiteKernel(), use_err=False):
 
         super().__init__(passband2lam)
 
@@ -51,39 +51,41 @@ class GaussianProcessesAugmentation(BaseAugmentation):
             Passband IDs for each observation.
         """
 
-        t        = np.array(t)
-        flux     = np.array(flux)
+        t = np.array(t)
+        flux = np.array(flux)
         flux_err = np.array(flux_err)
         passband = np.array(passband)
-        log_lam  = add_log_lam(passband, self.passband2lam)
+        log_lam = add_log_lam(passband, self.passband2lam)
 
         X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
-        
+
         X_error = (flux_err / np.std(flux)).reshape(-1)
         self.ss = StandardScaler()
         X_ss = self.ss.fit_transform(X)
 
-        reg_kwargs = dict(kernel=self.kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42)
+        reg_kwargs = dict(
+            kernel=self.kernel, optimizer="fmin_l_bfgs_b", n_restarts_optimizer=5, normalize_y=True, random_state=42
+        )
 
         if self.use_err:
-            reg_kwargs['alpha'] = X_error ** 2
+            reg_kwargs["alpha"] = X_error ** 2
 
         self.reg = GaussianProcessRegressor(**reg_kwargs)
-            
+
         self.reg.fit(X_ss, flux)
         return self
 
     def predict(self, t, passband):
         """
         Apply the augmentation model to the given observation time moments.
-        
+
         Parameters:
         -----------
         t : array-like
             Timestamps of light curve observations.
         passband : array-like
             Passband IDs for each observation.
-            
+
         Returns:
         --------
         flux_pred : array-like
@@ -91,14 +93,14 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         flux_err_pred : array-like
             Flux errors of the light curve observations, estimated by the augmentation model.
         """
-        
-        t        = np.array(t)
+
+        t = np.array(t)
         passband = np.array(passband)
-        log_lam  = add_log_lam(passband, self.passband2lam)
-        
+        log_lam = add_log_lam(passband, self.passband2lam)
+
         X = np.concatenate((t.reshape(-1, 1), log_lam.reshape(-1, 1)), axis=1)
         X_ss = self.ss.transform(X)
-        
+
         flux_pred, flux_err_pred = self.reg.predict(X_ss, return_std=True)
-        
+
         return flux_pred, flux_err_pred
