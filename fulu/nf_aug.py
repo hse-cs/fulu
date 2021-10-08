@@ -153,9 +153,6 @@ class NFFitter(object):
         else:
             y_std = np.zeros_like(y)
 
-        # noise = np.random.normal(0, 1, (y.shape[0], 1))
-        # y = np.concatenate((y, noise), axis=1)
-
         # numpy to tensor
         y_real = torch.tensor(y, dtype=torch.float32, device=self.device)
         y_real_std = torch.tensor(y_std, dtype=torch.float32, device=self.device)
@@ -163,9 +160,6 @@ class NFFitter(object):
 
         # tensor to dataset
         dataset_real = TensorDataset(y_real, y_real_std, X_cond)
-
-        criterion = nn.MSELoss()
-        self.loss_history = []
 
         # Fit GAN
         for epoch in range(self.n_epochs):
@@ -182,24 +176,16 @@ class NFFitter(object):
                     noise = np.random.normal(0, 1, (len(x_batch), 1))
                     noise = torch.tensor(noise, dtype=torch.float32, device=self.device)
                     x_batch = torch.cat((x_batch, noise), dim=1)
-
-                # y_pred = self.nf.sample(x_batch)
-
+                
                 # caiculate loss
                 loss = -self.nf.log_prob(y_batch, x_batch)
-                # loss = criterion(y_batch, y_pred)
-
+                
                 # optimization step
                 self.opt.zero_grad()
                 loss.backward()
                 self.opt.step()
 
-                # caiculate and store loss
-                self.loss_history.append(loss.detach().cpu())
-
     def predict(self, X):
-        # noise = np.random.normal(0, 1, (X.shape[0], 1))
-        # X = np.concatenate((X, noise), axis=1)
         X = torch.tensor(X, dtype=torch.float32, device=self.device)
         if self.randomize_x:
             noise = np.random.normal(0, 1, (len(X), 1))

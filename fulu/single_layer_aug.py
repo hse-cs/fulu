@@ -58,9 +58,9 @@ class FitNNRegressor:
 
     def fit(self, X, y):
         # Estimate model
-        self.model = NNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden, activation=self.activation).to(
-            self.device
-        )
+        self.model = NNRegressor(n_inputs=X.shape[1], 
+                                 n_hidden=self.n_hidden, 
+                                 activation=self.activation).to(self.device)
         # Convert X and y into torch tensors
         X_tensor = torch.as_tensor(X, dtype=torch.float32, device=self.device)
         y_tensor = torch.as_tensor(y, dtype=torch.float32, device=self.device)
@@ -79,10 +79,8 @@ class FitNNRegressor:
             raise ValueError('optimizer "{}" is not supported'.format(self.optimizer))
         # Enable dropout
         self.model.train(True)
-
         # Start the model fit
         for epoch_i in range(self.n_epochs):
-            loss_history = []
             for x_batch, y_batch in DataLoader(train_data, batch_size=self.batch_size, shuffle=True):
                 # make prediction on a batch
                 y_pred_batch = self.model(x_batch)
@@ -93,9 +91,6 @@ class FitNNRegressor:
                 loss.backward()
                 # update the model weights
                 opt.step()
-                loss_history.append(loss.detach().cpu())
-            if self.debug:
-                print("epoch: %i, mean loss: %.5f" % (epoch_i, np.mean(loss_history)))
 
     def predict(self, X):
         with torch.no_grad():
