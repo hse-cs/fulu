@@ -208,15 +208,13 @@ class NFFitter(object):
         y_pred = self.nf.sample(X).cpu().detach().numpy()[:, 0]
         # normalize
         if self.normalize_y:
-            y_pred = self.ss_y.inverse_transform(y_pred)
+            y_pred = self.ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
         return y_pred
 
     def predict_n_times(self, X, n_times=100):
         predictions = []
         for i in range(n_times):
-            y_pred = self.predict(X).reshape(
-                -1,
-            )
+            y_pred = self.predict(X).reshape(-1)
             predictions.append(y_pred)
         predictions = np.array(predictions)
         mean = predictions.mean(axis=0)
