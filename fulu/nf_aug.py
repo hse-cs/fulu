@@ -176,10 +176,10 @@ class NFFitter(object):
                     noise = np.random.normal(0, 1, (len(x_batch), 1))
                     noise = torch.tensor(noise, dtype=torch.float32, device=self.device)
                     x_batch = torch.cat((x_batch, noise), dim=1)
-                
+
                 # caiculate loss
                 loss = -self.nf.log_prob(y_batch, x_batch)
-                
+
                 # optimization step
                 self.opt.zero_grad()
                 loss.backward()

@@ -58,9 +58,9 @@ class FitNNRegressor:
 
     def fit(self, X, y):
         # Estimate model
-        self.model = NNRegressor(n_inputs=X.shape[1], 
-                                 n_hidden=self.n_hidden, 
-                                 activation=self.activation).to(self.device)
+        self.model = NNRegressor(n_inputs=X.shape[1], n_hidden=self.n_hidden, activation=self.activation).to(
+            self.device
+        )
         # Convert X and y into torch tensors
         X_tensor = torch.as_tensor(X, dtype=torch.float32, device=self.device)
         y_tensor = torch.as_tensor(y, dtype=torch.float32, device=self.device)
