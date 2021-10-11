@@ -106,9 +106,9 @@ class MLPRegressionAugmentation(BaseAugmentation):
             max_iter=self.max_iter,
             batch_size=self.batch_size,
         )
-        self.reg.fit(X_ss, y_ss.reshape(-1))
+        self.reg.fit(X_ss, y_ss)
 
-        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss).reshape(-1, 1)).reshape(-1)
         self.flux_err = np.sqrt(mean_squared_error(flux, flux_pred))
         return self
 
@@ -134,7 +134,7 @@ class MLPRegressionAugmentation(BaseAugmentation):
         X = self._preproc_features(t, passband, self.ss_t)
         X_ss = self.ss_x.transform(X)
 
-        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss))
+        flux_pred = self.ss_y.inverse_transform(self.reg.predict(X_ss).reshape(-1, 1)).reshape(-1)
         flux_err_pred = np.full_like(flux_pred, self.flux_err)
 
         return np.maximum(flux_pred, np.zeros(flux_pred.shape)), flux_err_pred

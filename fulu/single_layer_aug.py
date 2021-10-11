@@ -79,32 +79,18 @@ class FitNNRegressor:
             raise ValueError('optimizer "{}" is not supported'.format(self.optimizer))
         # Enable dropout
         self.model.train(True)
-
-        best_loss = float("inf")
-        best_state = self.model.state_dict()
-
         # Start the model fit
         for epoch_i in range(self.n_epochs):
-            loss_history = []
             for x_batch, y_batch in DataLoader(train_data, batch_size=self.batch_size, shuffle=True):
                 # make prediction on a batch
                 y_pred_batch = self.model(x_batch)
                 loss = loss_func(y_batch, y_pred_batch)
                 # zero the parameter gradients
-                for param in self.model.parameters():
-                    param.grad = None
-
+                opt.zero_grad()
                 # backpropagate gradients
                 loss.backward()
                 # update the model weights
                 opt.step()
-                loss_history.append(loss.item())
-            if self.debug:
-                print("epoch: %i, mean loss: %.5f" % (epoch_i, np.mean(loss_history)))
-            if np.mean(loss_history) <= best_loss:
-                best_loss = np.mean(loss_history)
-                best_state = self.model.state_dict()
-        self.model.load_state_dict(best_state)
 
     def predict(self, X):
         with torch.no_grad():
