@@ -11,7 +11,8 @@ class LcPlotter:
         self.passband2lam = passband2lam
         self.colors = {key: tone for key, tone in zip(passband2lam.keys(), mcolors.TABLEAU_COLORS.keys())}
         
-    def _make_dataframe(self, t, flux, flux_err, passband):
+    @staticmethod    
+    def _make_dataframe(t, flux, flux_err, passband):
         """
         """
 
@@ -24,8 +25,9 @@ class LcPlotter:
         obj['flux_err'] = flux_err
         obj['passband'] = passband
         return obj
-
-    def _ax_adjust(self):
+    
+    @staticmethod
+    def _ax_adjust():
         """
         """
 
@@ -43,9 +45,13 @@ class LcPlotter:
 
         return ax
     
-    def _save_fig(save):
-        if save is not None:
-            plt.savefig(save)
+    @staticmethod
+    def _save_fig(save_path):
+        """
+        """
+        
+        plt.savefig(save_path)
+        print("Your graph was saved")
             
     def errorbar_passband(self, t, flux, flux_err, passbands, passband, *, ax=None, title="", label='', marker='^', save=None):
         """
@@ -67,7 +73,8 @@ class LcPlotter:
         ax.legend(loc='best', ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad = 15)
         
-        self._save_fig(save)
+        if save is not None:
+            self._save_fig(save)
         
         return ax
 
@@ -77,16 +84,16 @@ class LcPlotter:
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):   
             anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
             anobject_approx = anobject_approx.sort_values('time')
             curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
-            ax.plotter(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
+            ax.plot(curve['time'].values, curve['flux'].values, label='sum', linewidth=5.5, color='pink')
             ax.legend(loc='best', ncol=3, fontsize=20)
             ax.set_title(title, size=35, pad = 15)
-            
-        self._save_fig(save)
+        if save is not None:    
+            self._save_fig(save)
         
         return ax
 
@@ -95,7 +102,7 @@ class LcPlotter:
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
             anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
             curve = anobject_approx[['time', 'flux']].groupby('time', as_index=False).sum()
@@ -103,8 +110,8 @@ class LcPlotter:
             ax.axvline(pred_peak, label='pred peak', color='red', linestyle = '--', linewidth=5.5)
             ax.legend(loc='best', ncol=3, fontsize=20)
             ax.set_title(title, size=35, pad = 15)
-            
-        self._save_fig(save)
+        if save is not None:    
+            self._save_fig(save)
         
         return ax
 
@@ -113,7 +120,7 @@ class LcPlotter:
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
             
         anobject_approx = self._make_dataframe(t_approx, flux_approx, flux_err_approx, passband_approx)
         anobject_approx = anobject_approx.sort_values('time')
@@ -126,28 +133,29 @@ class LcPlotter:
                          color=self.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
         ax.legend(loc='best', ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad = 15)
-        
-        self._save_fig(save)
+        if save is not None:
+            self._save_fig(save)
         
         return ax
         
                     
-    def plot_one_graph_passband(self, *, t_train, flux_train, flux_err_train, passband_train, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, title="", save=None):
+    def plot_one_graph_passband(self, *, t, flux, flux_err, passbands, passband, ax=None, t_test=None, flux_test=None, flux_err_test=None, passband_test=None, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, title="", save=None):
         """
         """
         if ax is None:
             ax = self._ax_adjust()
             
-        self.errorbar_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_test=t_test, flux_test=flux_test, flux_err_test=flux_err_test, passband_test=passband_test)
-        self.errorbar_passband(t=t_train, flux=flux_train, )
+        self.errorbar_passband(t=t, flux=flux, flux_err=flux_err, passbands=passbands, passband=passband, ax=ax)
+        if (t_test is not None)&(flux_test is not None)&(flux_err_test is not None)&(passband_test is not None):
+            self.errorbar_passband(t=t_test, flux=flux_test, flux_err = flux_err_test, passbands = passband_test)
         
         if (t_approx is not None)&(flux_approx is not None)&(flux_err_approx is not None)&(passband_approx is not None):
             self.plot_approx(t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx, passband=passband, ax=ax)
             
         ax.legend(loc='best', ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad = 15)
-        
-        self._save_fig(save)
+        if save is not None:
+            self._save_fig(save)
         
         return ax
 
@@ -156,17 +164,17 @@ class LcPlotter:
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
             
         ax.axvline(true_peak, label='true peak', color='black', linewidth=5.5)
         ax.set_title(title, size=35, pad = 15)
-        
-        self._save_fig(save)
+        if save is not None:
+            self._save_fig(save)
         
         return ax
 
     
-    def plot_one_graph_all(self, *, t_train, flux_train, flux_err_train, passband_train, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None):
+    def plot_one_graph_all(self, *, t, flux, flux_err, passbands, t_approx=None, flux_approx=None, flux_err_approx=None, passband_approx=None, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None):
         """
         Plotting train points of light curve with errors for all passbands on one graph by default.
 
@@ -200,14 +208,14 @@ class LcPlotter:
         """
         
         if ax is None:
-            ax = self._ax_adjust(title=title)
+            ax = self._ax_adjust()
             
         if passband is not None:
-            self.plot_one_graph_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=passband, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
+            self.plot_one_graph_passband(t=t, flux=flux, flux_err=flux_err, passbands=passbands, passband=passband, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
 
         else:
             for band in self.passband2lam.keys():
-                self.plot_one_graph_passband(t_train=t_train, flux_train=flux_train, flux_err_train=flux_err_train, passband_train=passband_train, passband=band, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
+                self.plot_one_graph_passband(t=t, flux=flux, flux_err=flux_err, passbands=passbands, passband=band, ax=ax, t_approx=t_approx, flux_approx=flux_approx, flux_err_approx=flux_err_approx, passband_approx=passband_approx)
 
         if true_peak is not None:
             self.plot_true_peak(true_peak, ax = ax)
@@ -218,7 +226,7 @@ class LcPlotter:
 
         ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)
-        
-        self._save_fig(save)
+        if save is not None:
+            self._save_fig(save)
         
         return ax

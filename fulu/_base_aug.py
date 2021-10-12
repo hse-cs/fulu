@@ -119,7 +119,7 @@ class BaseAugmentation(ABC):
     def _plot_passband(self, passband, ax, approx=None):
         """
         Helper to construct a light curve in the next method plotter.
-        
+        @staticmethod
         Parameters:
         -----------
         passband : str or int or float
@@ -137,12 +137,12 @@ class BaseAugmentation(ABC):
             anobject_approx = self.plotter._make_dataframe(*approx)
             anobject_approx = anobject_approx.sort_values('time')
             light_curve_approx = anobject_approx[anobject_approx.passband == passband]
-            ax.plotter(light_curve_approx['time'].values, light_curve_approx['flux'].values,
-                       linewidth=3.5, color=self.plotter.colors[passband], label=str(passband) + ' approx flux', zorder=10)
+            ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
+                       linewidth=3.5, color=self.plotter.colors[passband], label= '{} approx flux'.format(passband), zorder=10)
             ax.fill_between(light_curve_approx['time'].values,
                             light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
                             light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
-                            color=self.plotter.colors[passband], alpha=0.2, label=str(passband) + ' approx sigma')
+                            color=self.plotter.colors[passband], alpha=0.2, label='{} approx sigma'.format(passband))
 
     def plot(self, *, plot_approx=True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_approx=1000):
         """
@@ -174,13 +174,13 @@ class BaseAugmentation(ABC):
             ax = self.plotter._ax_adjust()
 
         approx = self.augmentation(np.min(self.t_train), np.max(self.t_train), n_approx)
-        if plot_approx is not None:
+        if plot_approx:
             plot_approx = approx
 
         if passband is not None:
             self._plot_passband(passband, ax, plot_approx)
         else:
-            for band in self.passband2lam.keys():
+            for band in self.passband2lam:
                 self._plot_passband(band, ax, plot_approx)
 
         if true_peak is not None:
@@ -192,5 +192,6 @@ class BaseAugmentation(ABC):
 
         ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)
-        self.plotter._save_fig(save)
+        if save is not None:
+            self.plotter._save_fig(save)
         return ax
