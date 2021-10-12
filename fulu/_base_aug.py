@@ -122,15 +122,15 @@ class BaseAugmentation(ABC):
         
         Parameters:
         -----------
-        approx : tuple of array-like or None
-            Augumentated light curve
         passband : str or int or float
-            A key of self.passband2lam dict
+            A key of self.passband2lam dict.
         ax : matplotlib.pyplot.subplot object
             You can set the axis as an element of your matplotlib.pyplot.figure object.
+        approx : tuple of array-like or None
+            Augumentated light curve.
         """
         
-        LcPlotter(self.passband2lam).errorbar_passband(t=self.t_train, flux=self.flux_train, flux_err=self.flux_err_train,
+        self.plotter.errorbar_passband(t=self.t_train, flux=self.flux_train, flux_err=self.flux_err_train,
                                                        passbands=self.passband_train, passband=passband, ax=ax)
         
         if approx:
@@ -148,7 +148,7 @@ class BaseAugmentation(ABC):
         """
         Plotting train points of light curve with errors for all passbands on one graph by default. A black solid curve isn't plotted at the predicted points. The predicted flux errors are also plotted using a gray bar.
 
-        If you submit the name passband, only the submitted passband is built.
+        If you submit the name passband, only the submitted passband will built.
 
         Parameters:
         -----------
@@ -192,6 +192,5 @@ class BaseAugmentation(ABC):
 
         ax.set_title(title, size=35, pad = 15)
         ax.legend(loc='best', ncol=3, fontsize=20)
-        if save is not None:
-            plt.savefig(save)
+        self.plotter._save_fig(save)
         return ax
