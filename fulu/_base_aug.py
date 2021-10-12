@@ -7,16 +7,15 @@ from fulu.plotting import LcPlotter
 
 
 def add_log_lam(passband, passband2lam):
-    """
-    """
-    
+    """ """
+
     log_lam = np.array([passband2lam[i] for i in passband])
     return log_lam
 
+
 def create_aug_data(t_min, t_max, passband_ids, n_obs=1000):
-    """
-    """
-    
+    """ """
+
     t = []
     passband = []
     for band in passband_ids:
@@ -129,22 +128,49 @@ class BaseAugmentation(ABC):
         approx : tuple of array-like or None
             Augumentated light curve.
         """
-        
-        self.plotter.errorbar_passband(t=self.t_train, flux=self.flux_train, flux_err=self.flux_err_train,
-                                                       passbands=self.passband_train, passband=passband, ax=ax)
-        
+
+        self.plotter.errorbar_passband(
+            t=self.t_train,
+            flux=self.flux_train,
+            flux_err=self.flux_err_train,
+            passbands=self.passband_train,
+            passband=passband,
+            ax=ax,
+        )
+
         if approx:
             anobject_approx = self.plotter._make_dataframe(*approx)
-            anobject_approx = anobject_approx.sort_values('time')
+            anobject_approx = anobject_approx.sort_values("time")
             light_curve_approx = anobject_approx[anobject_approx.passband == passband]
-            ax.plot(light_curve_approx['time'].values, light_curve_approx['flux'].values,
-                       linewidth=3.5, color=self.plotter.colors[passband], label= '{} approx flux'.format(passband), zorder=10)
-            ax.fill_between(light_curve_approx['time'].values,
-                            light_curve_approx['flux'].values - light_curve_approx['flux_err'].values,
-                            light_curve_approx['flux'].values + light_curve_approx['flux_err'].values,
-                            color=self.plotter.colors[passband], alpha=0.2, label='{} approx sigma'.format(passband))
+            ax.plot(
+                light_curve_approx["time"].values,
+                light_curve_approx["flux"].values,
+                linewidth=3.5,
+                color=self.plotter.colors[passband],
+                label="{} approx flux".format(passband),
+                zorder=10,
+            )
+            ax.fill_between(
+                light_curve_approx["time"].values,
+                light_curve_approx["flux"].values - light_curve_approx["flux_err"].values,
+                light_curve_approx["flux"].values + light_curve_approx["flux_err"].values,
+                color=self.plotter.colors[passband],
+                alpha=0.2,
+                label="{} approx sigma".format(passband),
+            )
 
-    def plot(self, *, plot_approx=True, passband=None, ax=None, true_peak=None, plot_peak=False, title="", save=None, n_approx=1000):
+    def plot(
+        self,
+        *,
+        plot_approx=True,
+        passband=None,
+        ax=None,
+        true_peak=None,
+        plot_peak=False,
+        title="",
+        save=None,
+        n_approx=1000,
+    ):
         """
         Plotting train points of light curve with errors for all passbands on one graph by default. A black solid curve isn't plotted at the predicted points. The predicted flux errors are also plotted using a gray bar.
 
@@ -161,7 +187,7 @@ class BaseAugmentation(ABC):
         true_peak : float
             The real peak of the light curve flux.
         plot_peak : bool or int
-            Flag is responsible for plotting peak by max flux of overall flux. 
+            Flag is responsible for plotting peak by max flux of overall flux.
         title : str
             The name of the graph set by ax.
         save : str or None
@@ -185,13 +211,13 @@ class BaseAugmentation(ABC):
 
         if true_peak is not None:
             self.plotter.plot_true_peak(true_peak=true_peak, ax=ax)
-            
+
         if plot_peak:
             self.plotter.plot_sum_passbands(*approx, ax=ax)
             self.plotter.plot_peak(*approx, ax=ax)
 
-        ax.set_title(title, size=35, pad = 15)
-        ax.legend(loc='best', ncol=3, fontsize=20)
+        ax.set_title(title, size=35, pad=15)
+        ax.legend(loc="best", ncol=3, fontsize=20)
         if save is not None:
             self.plotter._save_fig(save)
         return ax

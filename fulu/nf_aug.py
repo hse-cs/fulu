@@ -263,7 +263,7 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         """
 
         super().fit(t, flux, flux_err, passband)
-        
+
         t = np.array(t)
         flux = np.array(flux)
         flux_err = np.array(flux_err)

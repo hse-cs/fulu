@@ -87,7 +87,7 @@ class MLPRegressionAugmentation(BaseAugmentation):
         passband : array-like
             Passband IDs for each observation.
         """
-        
+
         super().fit(t, flux, flux_err, passband)
 
         self.ss_t = StandardScaler().fit(np.array(t).reshape((-1, 1)))

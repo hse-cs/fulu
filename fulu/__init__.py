@@ -5,4 +5,3 @@ from .single_layer_aug import SingleLayerNetAugmentation
 from .nf_aug import NormalizingFlowAugmentation
 
 from .plotting import LcPlotter
-
