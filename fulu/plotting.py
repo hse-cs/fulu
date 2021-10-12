@@ -73,7 +73,7 @@ class LcPlotter:
             markeredgewidth=1.50,
             fmt=".",
             color=self.colors[passband],
-            label="{}{}".format(passband, label),
+            label="{} {}".format(passband, label),
         )
 
         ax.legend(loc="best", ncol=3, fontsize=20)
@@ -146,7 +146,7 @@ class LcPlotter:
             light_curve_approx["flux"].values,
             linewidth=3.5,
             color=self.colors[passband],
-            label=str(passband) + " approx flux",
+            label="{} approx flux".format(passband),
             zorder=10,
         )
         ax.fill_between(
@@ -155,7 +155,7 @@ class LcPlotter:
             light_curve_approx["flux"].values + light_curve_approx["flux_err"].values,
             color=self.colors[passband],
             alpha=0.2,
-            label=str(passband) + " approx sigma",
+            label="{} approx sigma".format(passband),
         )
         ax.legend(loc="best", ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad=15)
