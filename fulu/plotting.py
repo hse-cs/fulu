@@ -12,8 +12,6 @@ class LcPlotter:
 
     @staticmethod
     def _make_dataframe(t, flux, flux_err, passband):
-        """ """
-
         if t is None or flux is None or flux_err is None or passband is None:
             raise ValueError("All values must be numerical arrays")
 
@@ -26,8 +24,6 @@ class LcPlotter:
 
     @staticmethod
     def _ax_adjust():
-        """ """
-
         fig = plt.figure(figsize=(20, 10), dpi=100)
         plt.rcParams.update({"font.size": 30})
         fig.subplots_adjust(left=0.07, right=0.98, top=0.90, bottom=0.15)
@@ -44,16 +40,12 @@ class LcPlotter:
 
     @staticmethod
     def _save_fig(save_path):
-        """ """
-
         plt.savefig(save_path)
-        print("Your graph was saved")
+        print("Your graph was saved into {}".format(save_path))
 
     def errorbar_passband(
         self, t, flux, flux_err, passbands, passband, *, ax=None, title="", label="", marker="^", save=None
     ):
-        """ """
-
         if ax is None:
             ax = self._ax_adjust()
 
@@ -71,7 +63,6 @@ class LcPlotter:
             markersize=14.50,
             markeredgecolor="black",
             markeredgewidth=1.50,
-            fmt=".",
             color=self.colors[passband],
             label="{} {}".format(passband, label),
         )
