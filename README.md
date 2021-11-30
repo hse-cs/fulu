@@ -26,3 +26,5 @@ aug = MLPRegressionAugmentation(passband2lam)
 aug.fit(t, flux, flux_err, passbands)
 t_aug, flux_aug, flux_err_aug, passband_aug = aug.augmentation(t.min(), t.max(), 100)
 ```
+
+Please find a plotting example in [`notebooks_examples/plotting.ipynb`](notebooks_examples/plotting.ipynb)
