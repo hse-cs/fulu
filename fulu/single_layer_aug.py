@@ -182,6 +182,8 @@ class SingleLayerNetAugmentation(BaseAugmentation):
             Passband IDs for each observation.
         """
 
+        super().fit(t, flux, flux_err, passband)
+
         self.ss_t = StandardScaler().fit(np.array(t).reshape((-1, 1)))
 
         X = self._preproc_features(t, passband, self.ss_t)
