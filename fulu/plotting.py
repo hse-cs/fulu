@@ -58,7 +58,7 @@ class LcPlotter:
             light_curve["flux"].values,
             yerr=light_curve["flux_err"].values,
             linewidth=3.5,
-            marker=marker,
+            fmt=marker,
             elinewidth=1.7,
             markersize=14.50,
             markeredgecolor="black",
