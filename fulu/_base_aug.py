@@ -7,15 +7,11 @@ from fulu.plotting import LcPlotter
 
 
 def add_log_lam(passband, passband2lam):
-    """ """
-
     log_lam = np.array([passband2lam[i] for i in passband])
     return log_lam
 
 
 def create_aug_data(t_min, t_max, passband_ids, n_obs=1000):
-    """ """
-
     t = []
     passband = []
     for band in passband_ids:
@@ -49,6 +45,8 @@ class BaseAugmentation(ABC):
     def fit(self, t, flux, flux_err, passband):
         """
         Fit an augmentation model.
+
+        This base method must be called from child classes
 
         Parameters:
         -----------
@@ -118,7 +116,7 @@ class BaseAugmentation(ABC):
     def _plot_passband(self, passband, ax, approx=None):
         """
         Helper to construct a light curve in the next method plotter.
-        @staticmethod
+
         Parameters:
         -----------
         passband : str or int or float
@@ -163,13 +161,13 @@ class BaseAugmentation(ABC):
         self,
         *,
         plot_approx=True,
+        n_approx=1000,
         passband=None,
         ax=None,
         true_peak=None,
         plot_peak=False,
         title="",
         save=None,
-        n_approx=1000,
     ):
         """
         Plotting train points of light curve with errors for all passbands on one graph by default. A black solid curve isn't plotted at the predicted points. The predicted flux errors are also plotted using a gray bar.
@@ -178,22 +176,30 @@ class BaseAugmentation(ABC):
 
         Parameters:
         -----------
-        plot_approx : bool
-            Flag indicating it is required to build an approximation curve or isn't.
-        passband : str or int or float
-            Key of self.passband2lam dict.
-        ax : matplotlib.pyplot.subplot object or None
-            You can set the axis as an element of your matplotlib.pyplot.figure object.
-        true_peak : float
-            The real peak of the light curve flux.
-        plot_peak : bool or int
-            Flag is responsible for plotting peak by max flux of overall flux.
-        title : str
-            The name of the graph set by ax.
-        save : str or None
-            The path for saving graph.
+        plot_approx : bool, optional
+            Flag indicating it is required to plot an approximation curve or
+            isn't
         n_approx : int
             Number of approximation points in each passband.
+        passband : optional
+            Key of self.passband2lam dict or `None`, plot all passbands in the
+            latter case
+        ax : matplotlib.pyplot.subplot or None, optional
+            `matplotlib` axis to plot the graph on, if `None` then new figure
+            will be created and corresponded axis object will be returned
+        true_peak : float or None, optional
+            Plot the real peak time moment of the light curve
+        plot_peak : bool, optional
+            Plot approximated model peak
+        title : str, optional
+            The name of the graph set by `ax`.
+        save : str or None, optional
+            The path for saving graph.
+
+        Returns
+        -------
+        ax : matplotlib.pyplot.subplot
+            `matplotlib` axis with the graph
         """
 
         if ax is None:
@@ -203,11 +209,11 @@ class BaseAugmentation(ABC):
         if plot_approx:
             plot_approx = approx
 
-        if passband is not None:
-            self._plot_passband(passband, ax, plot_approx)
-        else:
+        if passband is None:
             for band in self.passband2lam:
                 self._plot_passband(band, ax, plot_approx)
+        else:
+            self._plot_passband(passband, ax, plot_approx)
 
         if true_peak is not None:
             self.plotter.plot_true_peak(true_peak=true_peak, ax=ax)
@@ -220,4 +226,5 @@ class BaseAugmentation(ABC):
         ax.legend(loc="best", ncol=3, fontsize=20)
         if save is not None:
             self.plotter._save_fig(save)
+
         return ax
