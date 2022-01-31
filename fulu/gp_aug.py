@@ -71,7 +71,7 @@ class GaussianProcessesAugmentation(BaseAugmentation):
         )
 
         if self.use_err:
-            reg_kwargs["alpha"] = X_error ** 2
+            reg_kwargs["alpha"] = X_error**2
 
         self.reg = GaussianProcessRegressor(**reg_kwargs)
 
