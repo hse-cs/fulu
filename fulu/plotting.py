@@ -58,7 +58,7 @@ class LcPlotter:
             light_curve["flux"].values,
             yerr=light_curve["flux_err"].values,
             linewidth=3.5,
-            fmt=marker,
+            marker=marker,
             elinewidth=1.7,
             markersize=14.50,
             markeredgecolor="black",
@@ -212,7 +212,6 @@ class LcPlotter:
             ax = self._ax_adjust()
 
         ax.axvline(true_peak, label="true peak", color="black", linewidth=5.5)
-        ax.legend(loc="best", ncol=3, fontsize=20)
         ax.set_title(title, size=35, pad=15)
         if save is not None:
             self._save_fig(save)
