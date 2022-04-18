@@ -142,7 +142,7 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         batch_size=500,
         lr=0.01,
         optimizer="Adam",
-        device="auto", 
+        device="auto",
         weight_decay=0,
     ):
         super().__init__(passband2lam)
@@ -204,8 +204,8 @@ class SingleLayerNetAugmentation(BaseAugmentation):
             batch_size=self.batch_size,
             lr=self.lr,
             optimizer=self.optimizer,
-            device=self.device, 
-            weight_decay=self.weight_decay
+            device=self.device,
+            weight_decay=self.weight_decay,
         )
         self.reg.fit(X_ss, y_ss)
 

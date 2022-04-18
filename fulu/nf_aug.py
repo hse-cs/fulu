@@ -109,7 +109,7 @@ class NFFitter(object):
         n_epochs=10,
         lr=0.0001,
         randomize_x=True,
-        device="cpu", 
+        device="cpu",
         weight_decay=0,
     ):
 
@@ -288,7 +288,7 @@ class NormalizingFlowAugmentation(BaseAugmentation):
             n_epochs=self.n_epochs,
             lr=self.lr,
             randomize_x=True,
-            device=self.device, 
+            device=self.device,
             weight_decay=self.weight_decay,
         )
         self.reg.fit(X_ss, flux, flux_err)

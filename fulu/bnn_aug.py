@@ -36,7 +36,7 @@ class FitBNNRegressor:
         kl_weight=0.1,
         optimizer="Adam",
         debug=0,
-        device="cpu", 
+        device="cpu",
         weight_decay=0,
     ):
         self.model = None
@@ -142,7 +142,7 @@ class BayesianNetAugmentation(BaseAugmentation):
         lr=0.01,
         kl_weight=0.0001,
         optimizer="Adam",
-        device="cpu", 
+        device="cpu",
         weight_decay=0,
     ):
         super().__init__(passband2lam)
@@ -199,8 +199,8 @@ class BayesianNetAugmentation(BaseAugmentation):
             lr=self.lr,
             kl_weight=self.kl_weight,
             optimizer=self.optimizer,
-            device=self.device, 
-            weight_decay=self.weight_decay
+            device=self.device,
+            weight_decay=self.weight_decay,
         )
         self.reg.fit(X_ss, y_ss)
         return self

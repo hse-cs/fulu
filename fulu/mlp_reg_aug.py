@@ -49,7 +49,7 @@ class MLPRegressionAugmentation(BaseAugmentation):
         activation="tanh",
         learning_rate_init=0.001,
         max_iter=90,
-        batch_size=1, 
+        batch_size=1,
         alpha=0.0001,
     ):
         super().__init__(passband2lam)
@@ -110,7 +110,7 @@ class MLPRegressionAugmentation(BaseAugmentation):
             activation=self.activation,
             learning_rate_init=self.learning_rate_init,
             max_iter=self.max_iter,
-            batch_size=self.batch_size, 
+            batch_size=self.batch_size,
             alpha=self.alpha,
         )
         self.reg.fit(X_ss, y_ss)
