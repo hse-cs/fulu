@@ -36,7 +36,8 @@ class FitBNNRegressor:
         kl_weight=0.1,
         optimizer="Adam",
         debug=0,
-        device="cpu",
+        device="cpu", 
+        weight_decay=0,
     ):
         self.model = None
         self.n_hidden = n_hidden
@@ -47,6 +48,7 @@ class FitBNNRegressor:
         self.optimizer = optimizer
         self.debug = debug
         self.device = torch.device(device)
+        self.weight_decay = weight_decay
 
     def fit(self, X, y):
         # Estimate model
@@ -60,13 +62,13 @@ class FitBNNRegressor:
         kl_loss = bnn.BKLLoss(reduction="mean", last_layer_only=False)
         # Estimate optimizer
         if self.optimizer == "Adam":
-            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         elif self.optimizer == "SGD":
-            opt = torch.optim.SGD(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.SGD(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         elif self.optimizer == "RMSprop":
-            opt = torch.optim.RMSprop(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.RMSprop(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         else:
-            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         # Enable droout
         self.model.train(True)
         # Start the model fit
@@ -127,6 +129,8 @@ class BayesianNetAugmentation(BaseAugmentation):
         Optimization algorithm name. Possible values: 'Adam', 'RMSprop', 'SGD'.
     device : str or torch device
         Torch device name, default is 'cpu'
+    weight_decay : float
+        L2 penalty (regularization term) parameter.
     """
 
     def __init__(
@@ -138,7 +142,8 @@ class BayesianNetAugmentation(BaseAugmentation):
         lr=0.01,
         kl_weight=0.0001,
         optimizer="Adam",
-        device="cpu",
+        device="cpu", 
+        weight_decay=0,
     ):
         super().__init__(passband2lam)
 
@@ -149,6 +154,7 @@ class BayesianNetAugmentation(BaseAugmentation):
         self.kl_weight = kl_weight
         self.optimizer = optimizer
         self.device = device
+        self.weight_decay = weight_decay
 
         self.ss_x = None
         self.ss_y = None
@@ -193,7 +199,8 @@ class BayesianNetAugmentation(BaseAugmentation):
             lr=self.lr,
             kl_weight=self.kl_weight,
             optimizer=self.optimizer,
-            device=self.device,
+            device=self.device, 
+            weight_decay=self.weight_decay
         )
         self.reg.fit(X_ss, y_ss)
         return self

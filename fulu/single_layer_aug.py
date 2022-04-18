@@ -37,7 +37,7 @@ class FitNNRegressor:
         n_epochs=10,
         batch_size=64,
         lr=0.01,
-        lam=0.0,
+        weight_decay=0.0,
         optimizer="Adam",
         debug=0,
         device="auto",
@@ -48,7 +48,7 @@ class FitNNRegressor:
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.lr = lr
-        self.lam = lam
+        self.weight_decay = weight_decay
         self.optimizer = optimizer
         self.debug = debug
 
@@ -70,11 +70,11 @@ class FitNNRegressor:
         loss_func = nn.MSELoss()
         # Estimate optimizer
         if self.optimizer == "Adam":
-            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.lam)
+            opt = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         elif self.optimizer == "SGD":
-            opt = torch.optim.SGD(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.SGD(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         elif self.optimizer == "RMSprop":
-            opt = torch.optim.RMSprop(self.model.parameters(), lr=self.lr)
+            opt = torch.optim.RMSprop(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         else:
             raise ValueError('optimizer "{}" is not supported'.format(self.optimizer))
         # Enable dropout
@@ -129,6 +129,8 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         Optimization algorithm. Possible values: {'SGD', 'Adam', 'RMSprop'}.
     device : str or torch device, optional
         Torch device name, default is 'auto' which uses CUDA if available and CPU if not
+    weight_decay : float
+        L2 penalty (regularization term) parameter.
     """
 
     def __init__(
@@ -140,7 +142,8 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         batch_size=500,
         lr=0.01,
         optimizer="Adam",
-        device="auto",
+        device="auto", 
+        weight_decay=0,
     ):
         super().__init__(passband2lam)
 
@@ -151,6 +154,7 @@ class SingleLayerNetAugmentation(BaseAugmentation):
         self.lr = lr
         self.optimizer = optimizer
         self.device = device
+        self.weight_decay = weight_decay
 
         self.ss_x = None
         self.ss_y = None
@@ -200,7 +204,8 @@ class SingleLayerNetAugmentation(BaseAugmentation):
             batch_size=self.batch_size,
             lr=self.lr,
             optimizer=self.optimizer,
-            device=self.device,
+            device=self.device, 
+            weight_decay=self.weight_decay
         )
         self.reg.fit(X_ss, y_ss)
 

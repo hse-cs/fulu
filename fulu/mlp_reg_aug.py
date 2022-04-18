@@ -34,6 +34,8 @@ class MLPRegressionAugmentation(BaseAugmentation):
     batch_size : int
         Size of minibatches for stochastic optimizers. If the solver is ‘lbfgs’,
         the classifier will not use minibatch. When set to “auto”, batch_size=min(200, n_samples)
+    alpha : float
+        L2 penalty (regularization term) parameter.
     """
 
     def __init__(
@@ -47,7 +49,8 @@ class MLPRegressionAugmentation(BaseAugmentation):
         activation="tanh",
         learning_rate_init=0.001,
         max_iter=90,
-        batch_size=1,
+        batch_size=1, 
+        alpha=0.0001,
     ):
         super().__init__(passband2lam)
 
@@ -63,6 +66,7 @@ class MLPRegressionAugmentation(BaseAugmentation):
         self.learning_rate_init = learning_rate_init
         self.max_iter = max_iter
         self.batch_size = batch_size
+        self.alpha = alpha
 
     def _preproc_features(self, t, passband, ss_t):
         passband = np.array(passband)
@@ -106,7 +110,8 @@ class MLPRegressionAugmentation(BaseAugmentation):
             activation=self.activation,
             learning_rate_init=self.learning_rate_init,
             max_iter=self.max_iter,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size, 
+            alpha=self.alpha,
         )
         self.reg.fit(X_ss, y_ss)
 
