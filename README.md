@@ -1,11 +1,14 @@
 # Welcome to Fulu
 
+[![PyPI version](https://badge.fury.io/py/fulu.svg)](https://badge.fury.io/py/fulu)
+[![Downloads](https://pepy.tech/badge/fulu)](https://pepy.tech/project/fulu)
 [![Tests](https://github.com/HSE-LAMBDA/fulu/actions/workflows/tests.yml/badge.svg)](https://github.com/HSE-LAMBDA/fulu/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `Fulu` is a python library of methods for astronomical light curves approximation based on machine learning. It was named after the variable star Zeta Cassiopeiae 590 light-years from the Sun and officially named [Fulu](https://simbad.cds.unistra.fr/simbad/sim-id?Ident=HR153).
 
 
-![](images/cas.png)
+![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/cas.png)
 _Cassiopeia constellation [[source]](https://en.wikipedia.org/wiki/File:Cassiopeia_constellation_map.svg)_
 
 The library contains our implementation of light curve approximation method based on Gaussian Processes described in [1], and several other methods based on Normalizing Flows, Shallow and Bayesian Neural Networks considered in [2].
@@ -16,6 +19,11 @@ The library contains our implementation of light curve approximation method base
 
 
 ## Install
+
+```sh
+pip install fulu
+```
+or
 
 ```sh
 python3 -m pip install git+https://github.com/HSE-LAMBDA/fulu
@@ -49,6 +57,6 @@ plotic.plot_one_graph_all(t=t, flux=flux, flux_err=flux_err, passbands=passbands
                           t_approx=t_aug, flux_approx=flux_aug,
                           flux_err_approx=flux_err_aug, passband_approx=passband_aug)
 ```
-![](images/ex.png)
+![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/ex.png)
 
 Please find a plotting example in [`notebooks_examples/plotting.ipynb`](notebooks_examples/plotting.ipynb)
