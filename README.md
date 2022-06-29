@@ -21,6 +21,11 @@ The library contains our implementation of light curve approximation method base
 ## Install
 
 ```sh
+pip install fulu
+```
+or
+
+```sh
 python3 -m pip install git+https://github.com/HSE-LAMBDA/fulu
 ```
 
