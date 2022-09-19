@@ -11,10 +11,16 @@
 ![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/cas.png)
 _Cassiopeia constellation [[source]](https://en.wikipedia.org/wiki/File:Cassiopeia_constellation_map.svg)_
 
-The library contains our implementation of light curve approximation method based on Gaussian Processes described in [1], and several other methods based on Normalizing Flows, Shallow and Bayesian Neural Networks considered in [2].
+The library contains our implementation of light curve approximation method based on Gaussian Processes described in [1], and several other methods based on Normalizing Flows, Shallow and Bayesian Neural Networks considered in [2, 3].
 
 - [1] K. Boone.  “Avocado: Photometric Classification of Astronomical Transients with Gaussian Process Augmentation.” The Astronomical Journal (2019). [[journal]](https://doi.org/10.3847/1538-3881/ab5182)[[arxiv]](https://doi.org/10.48550/arXiv.1907.04690)
 - [2] M. Demianenko, E. Samorodova, M. Sysak, A. Shiriaev, K. Malanchev, D. Derkach, M. Hushchyn. "Supernova Light Curves Approximation based on Neural Network Models." ArXiv abs/2206.13306 (2022). [[arxiv]](https://doi.org/10.48550/arXiv.2206.13306)
+- [3] M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. Toward an understanding of the properties of neural network approaches for supernovae light curve approximation, 	arXiv:2209.07542 (2022). [[arxiv](https://doi.org/10.48550/arXiv.2209.07542)]
+
+## How to cite
+If you use Fulu in a scientific publication, we would appreciate citations to the following paper:
+
+- M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. Toward an understanding of the properties of neural network approaches for supernovae light curve approximation, 	arXiv:2209.07542 (2022). [[arxiv](https://doi.org/10.48550/arXiv.2209.07542)]
 
 
 
