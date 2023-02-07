@@ -112,7 +112,6 @@ class NFFitter(object):
         device="cpu",
         weight_decay=0,
     ):
-
         self.normalize_y = normalize_y
         self.randomize_x = randomize_x
         self.batch_size = batch_size
@@ -139,7 +138,6 @@ class NFFitter(object):
         return y
 
     def fit(self, X, y, y_std=None):
-
         # reshape
         y = self.reshape(y)
 
