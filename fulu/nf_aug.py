@@ -110,13 +110,14 @@ class NFFitter(object):
         lr=0.0001,
         randomize_x=True,
         device="cpu",
+        weight_decay=0,
     ):
-
         self.normalize_y = normalize_y
         self.randomize_x = randomize_x
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.lr = lr
+        self.weight_decay = weight_decay
 
         prior = torch.distributions.MultivariateNormal(torch.zeros(var_size), torch.eye(var_size))
 
@@ -127,7 +128,7 @@ class NFFitter(object):
             )
 
         self.nf = NormalizingFlow(layers=layers, prior=prior)
-        self.opt = torch.optim.Adam(self.nf.parameters(), lr=self.lr)
+        self.opt = torch.optim.Adam(self.nf.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.device = torch.device(device)
 
@@ -137,7 +138,6 @@ class NFFitter(object):
         return y
 
     def fit(self, X, y, y_std=None):
-
         # reshape
         y = self.reshape(y)
 
@@ -231,15 +231,18 @@ class NormalizingFlowAugmentation(BaseAugmentation):
         A learning rate value of the optimization.
         Example:
             lr = 0.005
+    weight_decay : float
+        L2 penalty (regularization term) parameter.
     """
 
-    def __init__(self, passband2lam, batch_size=500, n_epochs=3000, lr=0.005, device="cpu"):
+    def __init__(self, passband2lam, batch_size=500, n_epochs=3000, lr=0.005, device="cpu", weight_decay=0):
         super().__init__(passband2lam)
 
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.lr = lr
         self.device = device
+        self.weight_decay = weight_decay
 
         self.passband2lam = passband2lam
 
@@ -284,6 +287,7 @@ class NormalizingFlowAugmentation(BaseAugmentation):
             lr=self.lr,
             randomize_x=True,
             device=self.device,
+            weight_decay=self.weight_decay,
         )
         self.reg.fit(X_ss, flux, flux_err)
 
