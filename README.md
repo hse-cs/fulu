@@ -5,7 +5,7 @@
 [![Tests](https://github.com/HSE-LAMBDA/fulu/actions/workflows/tests.yml/badge.svg)](https://github.com/HSE-LAMBDA/fulu/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`Fulu` is a python library of methods for astronomical light curves approximation based on machine learning. It was named after the variable star Zeta Cassiopeiae 590 light-years from the Sun and officially named [Fulu](https://simbad.cds.unistra.fr/simbad/sim-id?Ident=HR153).
+Fulu is a python library of methods for astronomical light curves approximation based on machine learning. It was named after the variable star Zeta Cassiopeiae 590 light-years from the Sun and officially named [Fulu](https://simbad.cds.unistra.fr/simbad/sim-id?Ident=HR153).
 
 
 ![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/cas.png)
@@ -14,13 +14,13 @@ _Cassiopeia constellation [[source]](https://en.wikipedia.org/wiki/File:Cassiope
 The library contains our implementation of light curve approximation method based on Gaussian Processes described in [1], and several other methods based on Normalizing Flows, Shallow and Bayesian Neural Networks considered in [2, 3].
 
 - [1] K. Boone.  “Avocado: Photometric Classification of Astronomical Transients with Gaussian Process Augmentation.” The Astronomical Journal (2019). [[journal]](https://doi.org/10.3847/1538-3881/ab5182)[[arxiv]](https://doi.org/10.48550/arXiv.1907.04690)
-- [2] M. Demianenko, E. Samorodova, M. Sysak, A. Shiriaev, K. Malanchev, D. Derkach, M. Hushchyn. "Supernova Light Curves Approximation based on Neural Network Models." Journal of Physics: Conference Series (2023). [[journal]](doi:10.1088/1742-6596/2438/1/012128) [[arxiv]](https://doi.org/10.48550/arXiv.2206.13306)
-- [3] M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. “Understanding of the properties of neural network approaches for transient light curve approximations.", Astronomy & Astrophysics (2023). [[journal]](doi:10.1051/0004-6361/202245189) [[arxiv]](doi:10.1051/0004-6361/202245189)]
+- [2] M. Demianenko, E. Samorodova, M. Sysak, A. Shiriaev, K. Malanchev, D. Derkach, M. Hushchyn. "Supernova Light Curves Approximation based on Neural Network Models." Journal of Physics: Conference Series (2023). [[journal]](https://doi.org/10.1088/1742-6596/2438/1/012128)[[arxiv]](https://doi.org/10.48550/arXiv.2206.13306)
+- [3] M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. “Understanding of the properties of neural network approaches for transient light curve approximations.", Astronomy & Astrophysics (2023). [[journal]](https://doi.org/10.1051/0004-6361/202245189)[[arxiv]](https://doi.org/10.48550/arXiv.2209.07542)
 
 ## How to cite
 If you use Fulu in a scientific publication, we would appreciate citations to the following paper:
 
-- M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. Understanding of the properties of neural network approaches for transient light curve approximations.", Astronomy & Astrophysics (2023). [[journal]](doi:10.1051/0004-6361/202245189) [[arxiv]](doi:10.1051/0004-6361/202245189)]
+- M. Demianenko, K. Malanchev, E. Samorodova, M. Sysak, A. Shiriaev, D. Derkach, M. Hushchyn. Understanding of the properties of neural network approaches for transient light curve approximations.", Astronomy & Astrophysics (2023). [[journal]](https://doi.org/10.1051/0004-6361/202245189)[[arxiv]](https://doi.org/10.48550/arXiv.2209.07542)
 
 
 
@@ -65,4 +65,4 @@ plotic.plot_one_graph_all(t=t, flux=flux, flux_err=flux_err, passbands=passbands
 ```
 ![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/ex.png)
 
-Please find a plotting example in [`notebooks_examples/plotting.ipynb`](notebooks_examples/plotting.ipynb)
+Please find a plotting example in [notebooks_examples/plotting.ipynb](notebooks_examples/plotting.ipynb)
