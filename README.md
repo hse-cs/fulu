@@ -65,4 +65,4 @@ plotic.plot_one_graph_all(t=t, flux=flux, flux_err=flux_err, passbands=passbands
 ```
 ![](https://raw.githubusercontent.com/HSE-LAMBDA/fulu/master/images/ex.png)
 
-Please find a plotting example in [notebooks_examples/plotting.ipynb](notebooks_examples/plotting.ipynb)
+Please find a plotting example in [notebooks_examples/plotting.ipynb](https://github.com/hse-cs/fulu/blob/master/notebook_examples/plotting.ipynb)
